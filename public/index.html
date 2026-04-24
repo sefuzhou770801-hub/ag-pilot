@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>消息路由</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/styles.css" />
+  </head>
+  <body>
+    <main class="card">
+      <!-- 标题栏 -->
+      <header class="card-header">
+        <div class="header-icon">⚡</div>
+        <h1>消息路由</h1>
+      </header>
+
+      <!-- CC 节点 -->
+      <section class="node-section" id="ccSection">
+        <div class="node-label">CC（Antigravity）</div>
+        <button class="node-card node-card--cc" id="ccCard" type="button">
+          <div class="node-main">
+            <span class="node-dot node-dot--cc"></span>
+            <span class="node-name" id="ccName">读取中...</span>
+          </div>
+          <span class="node-status" id="ccStatus">...</span>
+          <svg class="node-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <!-- 下拉选择 -->
+        <div class="dropdown" id="ccDropdown">
+          <div class="dropdown-list" id="ccList"></div>
+        </div>
+      </section>
+
+      <!-- 桥接箭头 -->
+      <div class="bridge-arrow" id="bridgeArrow">
+        <div class="arrow-line"></div>
+        <div class="arrow-icon">↕</div>
+        <div class="arrow-line"></div>
+      </div>
+
+      <!-- Codex 节点 -->
+      <section class="node-section" id="codexSection">
+        <div class="node-label">Codex</div>
+        <button class="node-card node-card--codex" id="codexCard" type="button">
+          <div class="node-main">
+            <span class="node-dot node-dot--codex"></span>
+            <span class="node-name" id="codexName">读取中...</span>
+          </div>
+          <span class="node-status" id="codexStatus">...</span>
+          <svg class="node-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <!-- 下拉选择 -->
+        <div class="dropdown" id="codexDropdown">
+          <div class="dropdown-list" id="codexList"></div>
+        </div>
+      </section>
+
+      <!-- 安全状态 -->
+      <div class="safety" id="safetyBanner">
+        <span class="safety-dot" id="safetyDot"></span>
+        <span class="safety-text" id="safetyText">检查中...</span>
+      </div>
+
+      <!-- 底部信息 -->
+      <footer class="card-footer">
+        <span class="footer-text" id="footerText">连接中...</span>
+        <span class="footer-time" id="footerTime">--:--</span>
+      </footer>
+    </main>
+
+    <script type="module" src="/assets/app.js"></script>
+  </body>
+</html>
