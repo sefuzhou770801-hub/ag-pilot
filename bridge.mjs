@@ -9,7 +9,7 @@ import {
   readLatestAntigravityReply,
   sendTextToAntigravity,
 } from "./lib/autoaccept-adapter.mjs";
-import { findGroup, loadState, saveState } from "./lib/config.mjs";
+import { findGroup, getViewGroup, loadState, saveState, updateViewGroup } from "./lib/config.mjs";
 import {
   openCodexThread,
   probeCodexThread,
@@ -43,11 +43,18 @@ export async function run(cmd, flags) {
 
   if (cmd === "status") {
     const state = await loadState();
+    const defaultGroup = getViewGroup(state);
     const autoAccept = await getAutoAcceptStatus().catch((error) => ({ error: error.message }));
     const socketPath = defaultCodexSocketPath();
     return {
       ok: true,
       state,
+      routing: {
+        defaultGroupId: defaultGroup?.id ?? "",
+        defaultGroupName: defaultGroup?.name ?? "",
+        ccTitle: defaultGroup?.ccTitle ?? "",
+        codexThreadId: defaultGroup?.codexThreadId ?? "",
+      },
       autoAccept,
       codex: {
         socketPath,
@@ -60,7 +67,7 @@ export async function run(cmd, flags) {
     const threadId = flags._[0];
     if (!threadId) throw new Error("Usage: bind-codex <threadId>");
     const state = await loadState();
-    const data = { ...state.data, codexThreadId: threadId, updatedAt: new Date().toISOString() };
+    const data = updateViewGroup(state, { codexThreadId: threadId });
     const path = await saveState(data);
     return { ok: true, path, data };
   }
@@ -69,7 +76,7 @@ export async function run(cmd, flags) {
     const title = flags.title ?? flags._.join(" ").trim();
     if (!title) throw new Error("Usage: bind-cc --title <Antigravity conversation title>");
     const state = await loadState();
-    const data = { ...state.data, ccTitle: title, updatedAt: new Date().toISOString() };
+    const data = updateViewGroup(state, { ccTitle: title });
     const path = await saveState(data);
     return { ok: true, path, data };
   }
@@ -164,7 +171,8 @@ async function requireThreadId(flags) {
     if (group.codexThreadId) return group.codexThreadId;
     throw new Error(`Codex thread is not bound for group: ${group.name}`);
   }
-  if (state.data.codexThreadId) return state.data.codexThreadId;
+  const defaultGroup = getViewGroup(state);
+  if (defaultGroup?.codexThreadId) return defaultGroup.codexThreadId;
   throw new Error("Codex thread is not bound. Run bind-codex <threadId> first.");
 }
 
@@ -178,7 +186,8 @@ async function requireCcTitle(flags, required = true) {
     if (!required) return undefined;
     throw new Error(`CC conversation is not bound for group: ${group.name}`);
   }
-  if (state.data.ccTitle) return state.data.ccTitle;
+  const defaultGroup = getViewGroup(state);
+  if (defaultGroup?.ccTitle) return defaultGroup.ccTitle;
   if (!required) return undefined;
   throw new Error("CC conversation is not bound. Run bind-cc --title <title> first.");
 }
