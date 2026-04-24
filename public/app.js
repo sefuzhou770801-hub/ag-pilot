@@ -51,7 +51,7 @@ el.safetyAction.addEventListener("click", async (e) => {
   if (!selectedTitle) return;
   const matchedGroup = findGroupForSelectedCc(snap);
   if (matchedGroup) {
-    await postJson("/api/groups/switch", { groupId: matchedGroup.id });
+    await switchGroup(matchedGroup.id);
   } else {
     await bindCcConversation(selectedTitle);
     return;
@@ -112,7 +112,7 @@ async function followSelectedCcGroup(snap) {
   uiBusy = true;
   try {
     el.footerText.textContent = "切换分组中";
-    await postJson("/api/groups/switch", { groupId: matchedGroup.id });
+    await switchGroup(matchedGroup.id);
     pulseArrow();
     return await fetchSnapshot();
   } finally {
@@ -277,7 +277,7 @@ function renderGroups(groups) {
     tab.addEventListener("click", async (e) => {
       e.stopPropagation();
       if (group.active) return;
-      await postJson("/api/groups/switch", { groupId: group.id });
+      await switchGroup(group.id);
       el.ccSection.classList.remove("open");
       el.codexSection.classList.remove("open");
       pulseArrow();
@@ -285,6 +285,19 @@ function renderGroups(groups) {
     });
     el.groupTabs.appendChild(tab);
   });
+}
+
+async function switchGroup(groupId) {
+  await postJson("/api/groups/switch", { groupId });
+  await openBoundCodex();
+}
+
+async function openBoundCodex() {
+  try {
+    await postJson("/api/open-codex", {});
+  } catch {
+    // Some groups intentionally have no Codex thread yet.
+  }
 }
 
 function findGroupForSelectedCc(snap) {
