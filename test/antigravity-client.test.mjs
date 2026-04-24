@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { findTargetByTitle } from "../lib/antigravity-client.mjs";
+import { conversationClickPointScript, findTargetByTitle } from "../lib/antigravity-client.mjs";
 
 test("findTargetByTitle does not match empty or unrelated target titles", () => {
   const targets = [
@@ -33,4 +33,12 @@ test("findTargetByTitle still matches real Antigravity page titles", () => {
   ];
 
   assert.equal(findTargetByTitle(targets, "Synchronizing Codex App Messages")?.webSocketDebuggerUrl, "ws://conversation");
+});
+
+test("conversationClickPointScript returns coordinates instead of DOM clicking", () => {
+  const script = conversationClickPointScript("Decoupling Antigravity-Codex Bridge");
+
+  assert.match(script, /getBoundingClientRect/);
+  assert.match(script, /requestAnimationFrame/);
+  assert.doesNotMatch(script, /\.click\(/);
 });
