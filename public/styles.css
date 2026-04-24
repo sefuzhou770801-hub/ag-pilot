@@ -71,7 +71,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .header-icon {
@@ -88,6 +88,95 @@ h1 {
   font-size: 16px;
   font-weight: 700;
   letter-spacing: -0.2px;
+}
+
+/* ---- 分组标签 ---- */
+
+.group-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.group-tabs {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.group-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.group-tab {
+  position: relative;
+  height: 28px;
+  max-width: 140px;
+  padding: 0 10px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.62);
+  color: var(--text-2);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 150ms ease, background 150ms ease, border-color 150ms ease;
+}
+
+.group-tab:hover {
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--text-1);
+}
+
+.group-tab.active {
+  color: var(--text-1);
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(0, 122, 255, 0.2);
+}
+
+.group-tab.active::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 3px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--cc-accent);
+}
+
+.group-add {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--cc-accent);
+  cursor: pointer;
+  flex-shrink: 0;
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1;
+  transition: transform 120ms ease, background 150ms ease;
+}
+
+.group-add:hover {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.group-add:active {
+  transform: scale(0.94);
 }
 
 /* ---- 节点区 ---- */
@@ -389,6 +478,18 @@ h1 {
 
   .dropdown-item.active {
     background: rgba(0, 122, 255, 0.15);
+  }
+
+  .group-tab,
+  .group-add {
+    background: rgba(58, 58, 60, 0.72);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .group-tab:hover,
+  .group-tab.active,
+  .group-add:hover {
+    background: rgba(72, 72, 74, 0.9);
   }
 
   .arrow-icon {

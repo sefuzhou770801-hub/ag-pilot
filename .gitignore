@@ -1,0 +1,8 @@
+state.json
+card-server.log
+*.log
+.DS_Store
+node_modules/
+.worktrees/
+worktrees/
+glow-overlay.swift
