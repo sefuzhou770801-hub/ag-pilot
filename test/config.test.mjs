@@ -35,12 +35,10 @@ test("readAutoAcceptSettings returns the configured CDP port", async () => {
   assert.equal(settings.cdpPort, 9444);
 });
 
-test("statePathFor uses override before the default home path", () => {
+test("statePathFor uses explicit paths before the project-local default", () => {
   assert.equal(statePathFor({ statePath: "/tmp/bridge-state.json" }), "/tmp/bridge-state.json");
-  assert.equal(
-    statePathFor({ homeDir: "/Users/example" }),
-    "/Users/example/.gemini/tools/cc-codex-bridge/state.json",
-  );
+  assert.equal(statePathFor({ projectRoot: "/Users/example/cc-codex-bridge" }), "/Users/example/cc-codex-bridge/state.json");
+  assert.match(statePathFor(), /cc-codex-bridge\/state\.json$/);
 });
 
 async function makeTempDir() {
