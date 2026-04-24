@@ -24,6 +24,7 @@ const el = {
   safetyBanner: $("safetyBanner"),
   safetyDot: $("safetyDot"),
   safetyText: $("safetyText"),
+  safetyAction: $("safetyAction"),
   footerText: $("footerText"),
   footerTime: $("footerTime"),
 };
@@ -39,6 +40,22 @@ el.addGroupBtn.addEventListener("click", async (e) => {
   const trimmed = String(name ?? "").trim();
   if (!trimmed) return;
   await postJson("/api/groups/create", { name: trimmed });
+  pulseArrow();
+  await refresh();
+});
+
+el.safetyAction.addEventListener("click", async (e) => {
+  e.stopPropagation();
+  const snap = lastSnapshot;
+  const selectedTitle = snap?.view?.cc?.selectedTitle;
+  if (!selectedTitle) return;
+  const matchedGroup = findGroupForSelectedCc(snap);
+  if (matchedGroup) {
+    await postJson("/api/groups/switch", { groupId: matchedGroup.id });
+  } else {
+    await bindCcConversation(selectedTitle);
+    return;
+  }
   pulseArrow();
   await refresh();
 });
@@ -149,20 +166,40 @@ function render(snap) {
     el.codexList.appendChild(item);
   });
 
-  // ---- 安全状态 ----
-  const risk = v.risk;
-  el.safetyBanner.className = `safety ${risk.level}`;
-  if (risk.level === "ok") {
-    el.safetyText.textContent = "双向通道就绪";
-  } else if (risk.level === "warning") {
-    el.safetyText.textContent = risk.message;
-  } else {
-    el.safetyText.textContent = risk.message;
-  }
+  renderSafety(snap);
 
   // ---- 底部 ----
   el.footerText.textContent = v.bridge.cdpConnected ? "周瑟夫" : "未连接";
   el.footerTime.textContent = new Date(v.generatedAt).toLocaleTimeString("zh-CN", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
+}
+
+function renderSafety(snap) {
+  const v = snap.view;
+  const risk = v.risk;
+  el.safetyBanner.className = `safety ${risk.level}`;
+  el.safetyAction.hidden = true;
+  el.safetyAction.textContent = "";
+
+  if (risk.level === "ok") {
+    el.safetyText.textContent = "双向通道就绪";
+    return;
+  }
+
+  const selectedTitle = v.cc.selectedTitle;
+  if (risk.level === "warning" && selectedTitle && v.cc.boundTitle && !v.cc.matched) {
+    const matchedGroup = findGroupForSelectedCc(snap);
+    if (matchedGroup) {
+      el.safetyText.textContent = `当前 CC 属于「${matchedGroup.name}」`;
+      el.safetyAction.textContent = "切过去";
+    } else {
+      el.safetyText.textContent = "当前 CC 未绑定到本分组";
+      el.safetyAction.textContent = "绑定当前";
+    }
+    el.safetyAction.hidden = false;
+    return;
+  }
+
+  el.safetyText.textContent = risk.message;
 }
 
 async function bindCcConversation(title) {
@@ -230,6 +267,15 @@ function renderGroups(groups) {
   });
 }
 
+function findGroupForSelectedCc(snap) {
+  const selectedTitle = normalizeTitle(snap?.view?.cc?.selectedTitle);
+  const activeGroupId = snap?.view?.activeGroupId;
+  if (!selectedTitle) return null;
+  return (snap?.view?.groups || []).find((group) => (
+    group.id !== activeGroupId && normalizeTitle(group.ccTitle) === selectedTitle
+  )) || null;
+}
+
 /* ---- 动效 ---- */
 
 function pulseArrow() {
@@ -256,6 +302,10 @@ function esc(text) {
   const d = document.createElement("div");
   d.textContent = text;
   return d.innerHTML;
+}
+
+function normalizeTitle(text) {
+  return String(text ?? "").trim().toLowerCase();
 }
 
 function timeAgo(dateStr) {
