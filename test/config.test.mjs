@@ -5,34 +5,47 @@ import path from "node:path";
 import test from "node:test";
 
 import {
-  findLatestAutoAcceptExtension,
-  readAutoAcceptSettings,
+  readBridgeConfig,
   statePathFor,
 } from "../lib/config.mjs";
 
-test("findLatestAutoAcceptExtension picks the highest installed AutoAccept version", async () => {
+test("readBridgeConfig uses AG_CDP_PORT before state and Antigravity settings", async () => {
   const root = await makeTempDir();
-  const oldPath = path.join(root, "yazanbaker.antigravity-autoaccept-3.1.0");
-  const newPath = path.join(root, "yazanbaker.antigravity-autoaccept-3.26.5");
-  await mkdir(oldPath, { recursive: true });
-  await mkdir(newPath, { recursive: true });
-  await writeFile(path.join(oldPath, "package.json"), JSON.stringify({ version: "3.1.0" }));
-  await writeFile(path.join(newPath, "package.json"), JSON.stringify({ version: "3.26.5" }));
-
-  const found = await findLatestAutoAcceptExtension(root);
-
-  assert.equal(found.version, "3.26.5");
-  assert.equal(found.path, newPath);
-});
-
-test("readAutoAcceptSettings returns the configured CDP port", async () => {
-  const root = await makeTempDir();
+  const statePath = path.join(root, "state.json");
   const settingsPath = path.join(root, "settings.json");
+  await writeFile(statePath, JSON.stringify({ cdpPort: 9555 }));
   await writeFile(settingsPath, JSON.stringify({ "autoAcceptV2.cdpPort": 9444 }));
 
-  const settings = await readAutoAcceptSettings(settingsPath);
+  const config = await readBridgeConfig({ statePath, settingsPath, env: { AG_CDP_PORT: "9666" } });
 
-  assert.equal(settings.cdpPort, 9444);
+  assert.equal(config.cdpPort, 9666);
+  assert.equal(config.source, "env");
+});
+
+test("readBridgeConfig uses state before Antigravity settings", async () => {
+  const root = await makeTempDir();
+  const statePath = path.join(root, "state.json");
+  const settingsPath = path.join(root, "settings.json");
+  await writeFile(statePath, JSON.stringify({ cdpPort: 9555 }));
+  await writeFile(settingsPath, JSON.stringify({ "autoAcceptV2.cdpPort": 9444 }));
+
+  const config = await readBridgeConfig({ statePath, settingsPath, env: {} });
+
+  assert.equal(config.cdpPort, 9555);
+  assert.equal(config.source, "state");
+});
+
+test("readBridgeConfig keeps old Antigravity CDP setting as fallback", async () => {
+  const root = await makeTempDir();
+  const statePath = path.join(root, "state.json");
+  const settingsPath = path.join(root, "settings.json");
+  await writeFile(statePath, JSON.stringify({}));
+  await writeFile(settingsPath, JSON.stringify({ "autoAcceptV2.cdpPort": 9444 }));
+
+  const config = await readBridgeConfig({ statePath, settingsPath, env: {} });
+
+  assert.equal(config.cdpPort, 9444);
+  assert.equal(config.source, "antigravity-settings");
 });
 
 test("statePathFor uses explicit paths before the project-local default", () => {
