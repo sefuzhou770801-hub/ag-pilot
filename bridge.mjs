@@ -161,34 +161,32 @@ export async function sendTextToAntigravityWithRetry(options = {}, retryOptions 
   }
 }
 
+export function resolveRoutingGroup(state, flags = {}) {
+  if (flags.group) {
+    const group = findGroup(state, flags.group);
+    if (!group) throw new Error(`Group not found: ${flags.group}`);
+    return group;
+  }
+  return getViewGroup(state);
+}
+
 async function requireThreadId(flags) {
   if (flags.thread) return flags.thread;
   if (flags._[0] && flags._[0].startsWith("019")) return flags._.shift();
   const state = await loadState();
-  if (flags.group) {
-    const group = findGroup(state, flags.group);
-    if (!group) throw new Error(`Group not found: ${flags.group}`);
-    if (group.codexThreadId) return group.codexThreadId;
-    throw new Error(`Codex thread is not bound for group: ${group.name}`);
-  }
-  const defaultGroup = getViewGroup(state);
-  if (defaultGroup?.codexThreadId) return defaultGroup.codexThreadId;
+  const group = resolveRoutingGroup(state, flags);
+  if (group?.codexThreadId) return group.codexThreadId;
+  if (group?.name) throw new Error(`Codex thread is not bound for group: ${group.name}`);
   throw new Error("Codex thread is not bound. Run bind-codex <threadId> first.");
 }
 
 async function requireCcTitle(flags, required = true) {
   if (flags.title) return flags.title;
   const state = await loadState();
-  if (flags.group) {
-    const group = findGroup(state, flags.group);
-    if (!group) throw new Error(`Group not found: ${flags.group}`);
-    if (group.ccTitle) return group.ccTitle;
-    if (!required) return undefined;
-    throw new Error(`CC conversation is not bound for group: ${group.name}`);
-  }
-  const defaultGroup = getViewGroup(state);
-  if (defaultGroup?.ccTitle) return defaultGroup.ccTitle;
+  const group = resolveRoutingGroup(state, flags);
+  if (group?.ccTitle) return group.ccTitle;
   if (!required) return undefined;
+  if (group?.name) throw new Error(`CC conversation is not bound for group: ${group.name}`);
   throw new Error("CC conversation is not bound. Run bind-cc --title <title> first.");
 }
 
