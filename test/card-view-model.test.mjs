@@ -7,7 +7,7 @@ test("shortenThreadId keeps the readable edges", () => {
   assert.equal(shortenThreadId("01900000-0000-7000-8000-000000000000"), "01900000...00000");
 });
 
-test("buildCardViewModel reports the selected CC conversation and mismatch risk", () => {
+test("buildCardViewModel keeps the bound CC even when another window is selected", () => {
   const model = buildCardViewModel({
     state: {
       data: {
@@ -26,9 +26,10 @@ test("buildCardViewModel reports the selected CC conversation and mismatch risk"
   });
 
   assert.equal(model.codex.boundThreadShort, "01900000...00000");
-  assert.equal(model.cc.selectedTitle, "Other CC");
-  assert.equal(model.risk.level, "warning");
-  assert.match(model.risk.message, /当前选中的 CC/);
+  assert.equal(model.cc.boundTitle, "Bound CC");
+  assert.equal(model.cc.matched, true);
+  assert.equal(model.risk.level, "ok");
+  assert.equal(model.risk.message, "双向通道就绪");
 });
 
 test("buildCardViewModel keeps the viewed group title instead of active aliases", () => {

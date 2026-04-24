@@ -420,33 +420,6 @@ h1 {
   font-size: 12px;
   font-weight: 500;
   color: var(--text-2);
-  flex: 1;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.safety-action {
-  height: 26px;
-  padding: 0 10px;
-  border: 1px solid rgba(255, 149, 0, 0.28);
-  border-radius: 999px;
-  background: rgba(255, 149, 0, 0.12);
-  color: #b35f00;
-  cursor: pointer;
-  flex-shrink: 0;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.safety-action:hover {
-  background: rgba(255, 149, 0, 0.2);
-}
-
-.safety-action[hidden] {
-  display: none;
 }
 
 /* ---- 底部 ---- */
