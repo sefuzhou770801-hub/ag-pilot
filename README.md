@@ -1,5 +1,7 @@
 # CC-Codex Bridge
 
+> 让两个 AI 自己传话，老板不再当人肉传送带。
+
 把 Antigravity 里的 CC 和 Codex App 连起来的本地桥接器。目标很简单：少复制粘贴，让两个 AI 在你确认的对话之间传话。
 
 ## 能做什么
@@ -14,7 +16,7 @@
 
 ```mermaid
 flowchart LR
-  Boss["用户 / Stream Deck"]
+  Boss["用户 / 快捷入口"]
   Card["本地状态卡片<br/>http://127.0.0.1:4319"]
   Bridge["bridge.mjs<br/>路由与命令入口"]
   State["state.json<br/>本机绑定状态"]
@@ -101,21 +103,6 @@ http://127.0.0.1:4319/
 
 本机状态保存在 `state.json`。这个文件可能包含你的真实对话标题和 Codex 对话 ID，默认不会提交到 Git。
 
-## Stream Deck 用法
-
-常用按钮只需要两个：
-
-```bash
-node /path/to/cc-codex-bridge/bridge.mjs cc-to-codex
-node /path/to/cc-codex-bridge/bridge.mjs codex-to-cc
-```
-
-如果要直接给 CC 发消息：
-
-```bash
-node /path/to/cc-codex-bridge/bridge.mjs ag-send --text "消息内容"
-```
-
 ## 测试
 
 ```bash
@@ -142,3 +129,7 @@ Codex 对话 ID 很难人工判断。卡片会优先从本机 Codex 数据库读
 ### 为什么不直接依赖云端 webhook？
 
 这个工具的目标是降低本机双窗口工作流的摩擦。核心路径在本机完成，延迟更低，也不会把对话内容发到额外服务器。
+
+### 已知问题
+
+- 前端切换分组会同时改变 CLI 的发送目标。临时解决：发消息前确认当前活跃分组。计划修复：CLI 增加 `--group` 参数。
