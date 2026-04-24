@@ -90,13 +90,33 @@ setInterval(() => {
 
 async function refresh() {
   try {
-    const res = await fetch("/api/snapshot", { cache: "no-store" });
-    lastSnapshot = await res.json();
+    const snap = await fetchSnapshot();
+    lastSnapshot = await followSelectedCcGroup(snap);
     render(lastSnapshot);
   } catch (err) {
     el.footerText.textContent = `连接失败`;
     el.safetyBanner.className = "safety danger";
     el.safetyText.textContent = "桥接器未响应";
+  }
+}
+
+async function fetchSnapshot() {
+  const res = await fetch("/api/snapshot", { cache: "no-store" });
+  return await res.json();
+}
+
+async function followSelectedCcGroup(snap) {
+  if (uiBusy || isMenuOpen()) return snap;
+  const matchedGroup = findGroupForSelectedCc(snap);
+  if (!matchedGroup) return snap;
+  uiBusy = true;
+  try {
+    el.footerText.textContent = "切换分组中";
+    await postJson("/api/groups/switch", { groupId: matchedGroup.id });
+    pulseArrow();
+    return await fetchSnapshot();
+  } finally {
+    uiBusy = false;
   }
 }
 
