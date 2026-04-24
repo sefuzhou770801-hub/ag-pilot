@@ -24,7 +24,6 @@ const el = {
   safetyBanner: $("safetyBanner"),
   safetyDot: $("safetyDot"),
   safetyText: $("safetyText"),
-  safetyAction: $("safetyAction"),
   footerText: $("footerText"),
   footerTime: $("footerTime"),
 };
@@ -40,22 +39,6 @@ el.addGroupBtn.addEventListener("click", async (e) => {
   const trimmed = String(name ?? "").trim();
   if (!trimmed) return;
   await postJson("/api/groups/create", { name: trimmed });
-  pulseArrow();
-  await refresh();
-});
-
-el.safetyAction.addEventListener("click", async (e) => {
-  e.stopPropagation();
-  const snap = lastSnapshot;
-  const selectedTitle = snap?.view?.cc?.selectedTitle;
-  if (!selectedTitle) return;
-  const matchedGroup = findGroupForSelectedCc(snap);
-  if (matchedGroup) {
-    await switchGroup(matchedGroup.id);
-  } else {
-    await bindCcConversation(selectedTitle);
-    return;
-  }
   pulseArrow();
   await refresh();
 });
@@ -90,8 +73,7 @@ setInterval(() => {
 
 async function refresh() {
   try {
-    const snap = await fetchSnapshot();
-    lastSnapshot = await followSelectedCcGroup(snap);
+    lastSnapshot = await fetchSnapshot();
     render(lastSnapshot);
   } catch (err) {
     el.footerText.textContent = `连接失败`;
@@ -105,21 +87,6 @@ async function fetchSnapshot() {
   return await res.json();
 }
 
-async function followSelectedCcGroup(snap) {
-  if (uiBusy || isMenuOpen()) return snap;
-  const matchedGroup = findGroupForSelectedCc(snap);
-  if (!matchedGroup) return snap;
-  uiBusy = true;
-  try {
-    el.footerText.textContent = "切换分组中";
-    await switchGroup(matchedGroup.id);
-    pulseArrow();
-    return await fetchSnapshot();
-  } finally {
-    uiBusy = false;
-  }
-}
-
 function render(snap) {
   const v = snap.view;
   const convs = snap.conversations || [];
@@ -129,16 +96,12 @@ function render(snap) {
   // ---- CC 节点 ----
   if (v.cc.boundTitle) {
     el.ccName.textContent = v.cc.boundTitle;
-    el.ccStatus.textContent = v.cc.matched ? "✓ 当前" : "✓";
+    el.ccStatus.textContent = "✓ 已绑定";
     el.ccStatus.className = "node-status";
-  } else if (v.cc.selectedTitle) {
-    el.ccName.textContent = v.cc.selectedTitle;
+  } else {
+    el.ccName.textContent = "未绑定 CC 对话";
     el.ccStatus.textContent = "点击绑定";
     el.ccStatus.className = "node-status unbound";
-  } else {
-    el.ccName.textContent = "未检测到对话";
-    el.ccStatus.textContent = "";
-    el.ccStatus.className = "node-status warning";
   }
 
   // CC 下拉列表
@@ -147,7 +110,7 @@ function render(snap) {
     const isBound = conv.title === v.cc.boundTitle;
     const item = document.createElement("button");
     item.className = "dropdown-item" + (isBound ? " active" : "");
-    const meta = isBound ? "已选" : conv.selected ? "当前" : "";
+    const meta = isBound ? "已绑定" : "";
     item.innerHTML = `
       <span class="dropdown-item-name">${esc(conv.title || "无标题")}</span>
       <span class="dropdown-item-meta">${meta}</span>`;
@@ -197,28 +160,6 @@ function renderSafety(snap) {
   const v = snap.view;
   const risk = v.risk;
   el.safetyBanner.className = `safety ${risk.level}`;
-  el.safetyAction.hidden = true;
-  el.safetyAction.textContent = "";
-
-  if (risk.level === "ok") {
-    el.safetyText.textContent = "双向通道就绪";
-    return;
-  }
-
-  const selectedTitle = v.cc.selectedTitle;
-  if (risk.level === "warning" && selectedTitle && v.cc.boundTitle && !v.cc.matched) {
-    const matchedGroup = findGroupForSelectedCc(snap);
-    if (matchedGroup) {
-      el.safetyText.textContent = `当前 CC 属于「${matchedGroup.name}」`;
-      el.safetyAction.textContent = "切过去";
-    } else {
-      el.safetyText.textContent = "当前 CC 未绑定到本分组";
-      el.safetyAction.textContent = "绑定当前";
-    }
-    el.safetyAction.hidden = false;
-    return;
-  }
-
   el.safetyText.textContent = risk.message;
 }
 
@@ -300,15 +241,6 @@ async function openBoundCodex() {
   }
 }
 
-function findGroupForSelectedCc(snap) {
-  const selectedTitle = normalizeTitle(snap?.view?.cc?.selectedTitle);
-  const activeGroupId = snap?.view?.activeGroupId;
-  if (!selectedTitle) return null;
-  return (snap?.view?.groups || []).find((group) => (
-    group.id !== activeGroupId && normalizeTitle(group.ccTitle) === selectedTitle
-  )) || null;
-}
-
 /* ---- 动效 ---- */
 
 function pulseArrow() {
@@ -335,10 +267,6 @@ function esc(text) {
   const d = document.createElement("div");
   d.textContent = text;
   return d.innerHTML;
-}
-
-function normalizeTitle(text) {
-  return String(text ?? "").trim().toLowerCase();
 }
 
 function timeAgo(dateStr) {
