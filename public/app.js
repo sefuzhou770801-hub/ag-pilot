@@ -6,6 +6,8 @@
 const $ = (id) => document.getElementById(id);
 
 const el = {
+  groupTabs: $("groupTabs"),
+  addGroupBtn: $("addGroupBtn"),
   ccCard: $("ccCard"),
   ccName: $("ccName"),
   ccStatus: $("ccStatus"),
@@ -27,6 +29,18 @@ const el = {
 };
 
 let lastSnapshot = null;
+
+/* ---- 分组操作 ---- */
+
+el.addGroupBtn.addEventListener("click", async (e) => {
+  e.stopPropagation();
+  const name = prompt("新分组名称", `分组 ${(lastSnapshot?.view?.groups?.length ?? 0) + 1}`);
+  const trimmed = String(name ?? "").trim();
+  if (!trimmed) return;
+  await postJson("/api/groups/create", { name: trimmed });
+  pulseArrow();
+  await refresh();
+});
 
 /* ---- 点击节点卡片展开/收起 ---- */
 
@@ -69,8 +83,9 @@ function render(snap) {
   const v = snap.view;
   const convs = snap.conversations || [];
 
+  renderGroups(v.groups || []);
+
   // ---- CC 节点 ----
-  const ccDisplayName = v.cc.boundTitle || v.cc.selectedTitle;
   if (v.cc.boundTitle) {
     el.ccName.textContent = v.cc.boundTitle;
     el.ccStatus.textContent = v.cc.matched ? "✓ 当前" : "✓";
@@ -155,6 +170,27 @@ function render(snap) {
   // ---- 底部 ----
   el.footerText.textContent = v.bridge.cdpConnected ? "周瑟夫" : "未连接";
   el.footerTime.textContent = new Date(v.generatedAt).toLocaleTimeString("zh-CN", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
+}
+
+function renderGroups(groups) {
+  el.groupTabs.innerHTML = "";
+  groups.forEach((group) => {
+    const tab = document.createElement("button");
+    tab.className = "group-tab" + (group.active ? " active" : "");
+    tab.type = "button";
+    tab.textContent = group.name || "未命名";
+    tab.title = group.name || "未命名";
+    tab.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      if (group.active) return;
+      await postJson("/api/groups/switch", { groupId: group.id });
+      el.ccSection.classList.remove("open");
+      el.codexSection.classList.remove("open");
+      pulseArrow();
+      await refresh();
+    });
+    el.groupTabs.appendChild(tab);
+  });
 }
 
 /* ---- 动效 ---- */

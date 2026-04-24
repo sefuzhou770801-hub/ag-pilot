@@ -1,0 +1,13 @@
+{
+  "groups": [
+    {
+      "id": "example-default-group",
+      "name": "默认分组",
+      "ccTitle": "Antigravity 对话标题",
+      "codexThreadId": "019example-codex-thread-id",
+      "createdAt": "2026-04-24T00:00:00.000Z"
+    }
+  ],
+  "activeGroupId": "example-default-group",
+  "updatedAt": "2026-04-24T00:00:00.000Z"
+}

@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 import { existsSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import {
   getAutoAcceptStatus,
@@ -16,23 +18,27 @@ import {
 } from "./lib/codex-ipc-client.mjs";
 import { readLatestAssistantReplyForThread } from "./lib/codex-session-log.mjs";
 
-const args = process.argv.slice(2);
-const command = args.shift();
-const flags = parseFlags(args);
+if (isCliEntrypoint()) {
+  const args = process.argv.slice(2);
+  const command = args.shift();
+  const flags = parseFlags(args);
 
-try {
-  const result = await run(command, flags);
-  printResult(result, flags.json);
-} catch (error) {
-  if (flags.json) {
-    console.log(JSON.stringify({ ok: false, error: error.message }, null, 2));
-  } else {
-    console.error(error.message);
+  try {
+    const result = await run(command, flags);
+    printResult(result, flags.json);
+  } catch (error) {
+    if (flags.json) {
+      const payload = { ok: false, error: error.message };
+      if (error.retried) payload.retried = true;
+      console.log(JSON.stringify(payload, null, 2));
+    } else {
+      console.error(error.message);
+    }
+    process.exit(1);
   }
-  process.exit(1);
 }
 
-async function run(cmd, flags) {
+export async function run(cmd, flags) {
   if (!cmd || cmd === "help" || cmd === "--help") return help();
 
   if (cmd === "status") {
@@ -102,7 +108,8 @@ async function run(cmd, flags) {
   if (cmd === "ag-send") {
     const title = await requireCcTitle(flags);
     const text = flags.text ?? flags._.join(" ").trim();
-    return { ok: true, result: await sendTextToAntigravity({ title, text }) };
+    const result = await sendTextToAntigravityWithRetry({ title, text });
+    return { ok: true, retried: result.retried, result };
   }
 
   if (cmd === "cc-to-codex") {
@@ -128,6 +135,23 @@ async function run(cmd, flags) {
   }
 
   throw new Error(`Unknown command: ${cmd}`);
+}
+
+export async function sendTextToAntigravityWithRetry(options = {}, retryOptions = {}) {
+  const sender = retryOptions.sender ?? sendTextToAntigravity;
+  const waitMs = retryOptions.waitMs ?? 3000;
+  try {
+    return { ...(await sender(options)), retried: false };
+  } catch (firstError) {
+    await sleep(waitMs);
+    try {
+      return { ...(await sender(options)), retried: true };
+    } catch (secondError) {
+      secondError.retried = true;
+      secondError.message = `${secondError.message} (first attempt also failed: ${firstError.message})`;
+      throw secondError;
+    }
+  }
 }
 
 async function requireThreadId(flags) {
@@ -179,6 +203,15 @@ function printResult(result, json) {
     return;
   }
   console.log(JSON.stringify(result, null, 2));
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isCliEntrypoint() {
+  if (!process.argv[1]) return false;
+  return path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 }
 
 function help() {

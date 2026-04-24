@@ -2,7 +2,7 @@
 set -euo pipefail
 
 PORT="${CC_CODEX_BRIDGE_PORT:-4319}"
-ROOT="/Users/zhousefu/.gemini/tools/cc-codex-bridge"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOG="$ROOT/card-server.log"
 
 if ! lsof -iTCP:"$PORT" -sTCP:LISTEN >/dev/null 2>&1; then

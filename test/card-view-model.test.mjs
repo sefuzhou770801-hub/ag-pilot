@@ -4,14 +4,14 @@ import test from "node:test";
 import { buildCardViewModel, shortenThreadId } from "../lib/card-view-model.mjs";
 
 test("shortenThreadId keeps the readable edges", () => {
-  assert.equal(shortenThreadId("019dbedb-68c1-7ba0-9e10-985fe3247e2e"), "019dbedb...47e2e");
+  assert.equal(shortenThreadId("01900000-0000-7000-8000-000000000000"), "01900000...00000");
 });
 
 test("buildCardViewModel reports the selected CC conversation and mismatch risk", () => {
   const model = buildCardViewModel({
     state: {
       data: {
-        codexThreadId: "019dbedb-68c1-7ba0-9e10-985fe3247e2e",
+        codexThreadId: "01900000-0000-7000-8000-000000000000",
         ccTitle: "Bound CC",
       },
     },
@@ -25,7 +25,7 @@ test("buildCardViewModel reports the selected CC conversation and mismatch risk"
     ],
   });
 
-  assert.equal(model.codex.boundThreadShort, "019dbedb...47e2e");
+  assert.equal(model.codex.boundThreadShort, "01900000...00000");
   assert.equal(model.cc.selectedTitle, "Other CC");
   assert.equal(model.risk.level, "warning");
   assert.match(model.risk.message, /当前选中的 CC/);
