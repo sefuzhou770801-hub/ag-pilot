@@ -29,6 +29,7 @@ const el = {
 };
 
 let lastSnapshot = null;
+let uiBusy = false;
 
 /* ---- 分组操作 ---- */
 
@@ -63,7 +64,10 @@ document.addEventListener("click", (e) => {
 /* ---- 自动刷新 ---- */
 
 await refresh();
-setInterval(refresh, 3000);
+setInterval(() => {
+  if (uiBusy || isMenuOpen()) return;
+  refresh();
+}, 3000);
 
 /* ---- 核心逻辑 ---- */
 
@@ -112,28 +116,20 @@ function render(snap) {
       <span class="dropdown-item-meta">${meta}</span>`;
     item.addEventListener("click", async (e) => {
       e.stopPropagation();
-      await postJson("/api/bind/cc", { title: conv.title });
-      el.ccSection.classList.remove("open");
-      pulseArrow();
-      await refresh();
+      await bindCcConversation(conv.title);
     });
     el.ccList.appendChild(item);
   });
 
   // ---- Codex 节点 ----
-  const codexTitle = v.codex.boundTitle || v.codex.latestTitle;
-  if (v.codex.boundTitle) {
-    el.codexName.textContent = v.codex.boundTitle;
+  if (v.codex.boundThreadId) {
+    el.codexName.textContent = v.codex.boundTitle || v.codex.boundThreadShort;
     el.codexStatus.textContent = "✓";
     el.codexStatus.className = "node-status";
-  } else if (v.codex.latestTitle) {
-    el.codexName.textContent = v.codex.latestTitle;
+  } else {
+    el.codexName.textContent = "未绑定 Codex 对话";
     el.codexStatus.textContent = "点击绑定";
     el.codexStatus.className = "node-status unbound";
-  } else {
-    el.codexName.textContent = "未检测到对话";
-    el.codexStatus.textContent = "";
-    el.codexStatus.className = "node-status warning";
   }
 
   // Codex 下拉列表
@@ -148,10 +144,7 @@ function render(snap) {
       <span class="dropdown-item-meta">${timeAgo(thread.updatedAt)}</span>`;
     item.addEventListener("click", async (e) => {
       e.stopPropagation();
-      await postJson("/api/bind/codex", { threadId: thread.threadId });
-      el.codexSection.classList.remove("open");
-      pulseArrow();
-      await refresh();
+      await bindCodexThread(thread);
     });
     el.codexList.appendChild(item);
   });
@@ -170,6 +163,50 @@ function render(snap) {
   // ---- 底部 ----
   el.footerText.textContent = v.bridge.cdpConnected ? "周瑟夫" : "未连接";
   el.footerTime.textContent = new Date(v.generatedAt).toLocaleTimeString("zh-CN", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
+}
+
+async function bindCcConversation(title) {
+  if (!title) return;
+  uiBusy = true;
+  el.ccName.textContent = title;
+  el.ccStatus.textContent = "保存中";
+  el.ccStatus.className = "node-status unbound";
+  try {
+    await postJson("/api/bind/cc", { title });
+    el.ccSection.classList.remove("open");
+    pulseArrow();
+    await refresh();
+  } catch {
+    el.footerText.textContent = "CC 保存失败";
+    el.safetyBanner.className = "safety danger";
+    el.safetyText.textContent = "CC 对话没有保存，请再点一次";
+  } finally {
+    uiBusy = false;
+  }
+}
+
+async function bindCodexThread(thread) {
+  if (!thread?.threadId) return;
+  uiBusy = true;
+  el.codexName.textContent = thread.title || thread.threadId;
+  el.codexStatus.textContent = "保存中";
+  el.codexStatus.className = "node-status unbound";
+  try {
+    await postJson("/api/bind/codex", { threadId: thread.threadId });
+    el.codexSection.classList.remove("open");
+    pulseArrow();
+    await refresh();
+  } catch {
+    el.footerText.textContent = "Codex 保存失败";
+    el.safetyBanner.className = "safety danger";
+    el.safetyText.textContent = "Codex 对话没有保存，请再点一次";
+  } finally {
+    uiBusy = false;
+  }
+}
+
+function isMenuOpen() {
+  return el.ccSection.classList.contains("open") || el.codexSection.classList.contains("open");
 }
 
 function renderGroups(groups) {
@@ -208,7 +245,11 @@ async function postJson(url, body) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  return await res.json();
+  const data = await res.json();
+  if (!res.ok || data.ok === false) {
+    throw new Error(data.error || "Request failed");
+  }
+  return data;
 }
 
 function esc(text) {

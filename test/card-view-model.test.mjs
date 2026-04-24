@@ -30,3 +30,88 @@ test("buildCardViewModel reports the selected CC conversation and mismatch risk"
   assert.equal(model.risk.level, "warning");
   assert.match(model.risk.message, /当前选中的 CC/);
 });
+
+test("buildCardViewModel keeps the viewed group title instead of active aliases", () => {
+  const model = buildCardViewModel({
+    state: {
+      data: {
+        groups: [
+          {
+            id: "default",
+            name: "默认分组",
+            ccTitle: "Synchronizing Codex App Messages",
+            codexThreadId: "019default",
+          },
+          {
+            id: "open-source",
+            name: "开源方案",
+            ccTitle: "Decoupling Antigravity-Codex Bridge",
+            codexThreadId: "019opensource",
+          },
+        ],
+        activeGroupId: "open-source",
+        viewGroupId: "open-source",
+        ccTitle: "Synchronizing Codex App Messages",
+        codexThreadId: "019default",
+      },
+    },
+    status: {
+      autoAccept: { cdp: { connected: true }, plugin: { version: "3.26.5" } },
+      codex: { socketExists: true },
+    },
+    conversations: [
+      { title: "Decoupling Antigravity-Codex Bridge", status: "active", selected: true, running: false, recent: true },
+    ],
+  });
+
+  assert.equal(model.cc.boundTitle, "Decoupling Antigravity-Codex Bridge");
+  assert.equal(model.cc.matched, true);
+  assert.equal(model.codex.boundThreadId, "019opensource");
+  assert.equal(model.codex.boundThreadShort, "019opensource");
+  assert.equal(model.codex.latestThreadId, "");
+});
+
+test("buildCardViewModel does not show active group codex aliases for an unbound viewed group", () => {
+  const model = buildCardViewModel({
+    state: {
+      data: {
+        groups: [
+          {
+            id: "default",
+            name: "默认分组",
+            ccTitle: "Default CC",
+            codexThreadId: "019default",
+          },
+          {
+            id: "open-source",
+            name: "开源方案",
+            ccTitle: "Decoupling Antigravity-Codex Bridge",
+            codexThreadId: "",
+          },
+        ],
+        activeGroupId: "open-source",
+        viewGroupId: "open-source",
+        ccTitle: "Default CC",
+        codexThreadId: "019default",
+      },
+    },
+    status: {
+      autoAccept: { cdp: { connected: true }, plugin: { version: "3.26.5" } },
+      codex: { socketExists: true },
+    },
+    codexDb: {
+      threads: [
+        { threadId: "019recent", title: "准备开源工作区", updatedAt: Date.now() },
+      ],
+    },
+    conversations: [
+      { title: "Decoupling Antigravity-Codex Bridge", status: "active", selected: true, running: false, recent: true },
+    ],
+  });
+
+  assert.equal(model.codex.boundThreadId, "");
+  assert.equal(model.codex.boundTitle, "");
+  assert.equal(model.codex.latestTitle, "准备开源工作区");
+  assert.equal(model.risk.level, "warning");
+  assert.match(model.risk.message, /Codex 对话未绑定/);
+});

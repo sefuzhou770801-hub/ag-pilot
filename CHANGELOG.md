@@ -10,3 +10,5 @@
 - Added `--group` support for targeting a specific group from the CLI.
 - Added a macOS LaunchAgent installer for the card service.
 - Moved the default state file lookup to the project-local `state.json`.
+- Fixed the card snapshot so viewed-group bindings cannot be overwritten by CLI active-group aliases.
+- Stopped the card from showing recent Codex threads as if they were saved bindings.
