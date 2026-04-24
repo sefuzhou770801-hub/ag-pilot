@@ -85,8 +85,10 @@ http://127.0.0.1:4319/
 | `node bridge.mjs ag-list` | 列出 AutoAccept 能看到的 Antigravity 对话 |
 | `node bridge.mjs ag-latest` | 读取绑定 CC 对话的最新回复 |
 | `node bridge.mjs ag-send --text "消息"` | 向绑定 CC 对话发送消息，失败会自动重试一次 |
+| `node bridge.mjs ag-send --group "分组名" --text "消息"` | 向指定分组绑定的 CC 对话发送消息 |
 | `node bridge.mjs codex-latest` | 读取绑定 Codex 对话的最新回复 |
 | `node bridge.mjs codex-send --text "消息"` | 向绑定 Codex 对话发送消息 |
+| `node bridge.mjs codex-send --group "分组名" --text "消息"` | 向指定分组绑定的 Codex 对话发送消息 |
 | `node bridge.mjs cc-to-codex` | 把 CC 最新回复发送到 Codex |
 | `node bridge.mjs codex-to-cc` | 把 Codex 最新回复发送回 CC |
 | `node bridge.mjs cc-to-codex --dry-run` | 只预览 CC → Codex，不发送 |
@@ -99,7 +101,8 @@ http://127.0.0.1:4319/
 - 点 `+` 创建新分组。
 - 点分组名切换当前活跃分组。
 - CC 和 Codex 的绑定只作用于当前活跃分组。
-- 主 CLI 不需要额外参数，默认操作当前活跃分组。
+- 主 CLI 不带 `--group` 时操作 CLI 活跃分组；带 `--group` 时操作指定分组。
+- 卡片切换分组只影响前端正在查看的分组，不会改变 CLI 默认发送目标。
 
 本机状态保存在 `state.json`。这个文件可能包含你的真实对话标题和 Codex 对话 ID，默认不会提交到 Git。
 
@@ -129,7 +132,3 @@ Codex 对话 ID 很难人工判断。卡片会优先从本机 Codex 数据库读
 ### 为什么不直接依赖云端 webhook？
 
 这个工具的目标是降低本机双窗口工作流的摩擦。核心路径在本机完成，延迟更低，也不会把对话内容发到额外服务器。
-
-### 已知问题
-
-- 前端切换分组会同时改变 CLI 的发送目标。临时解决：发消息前确认当前活跃分组。计划修复：CLI 增加 `--group` 参数。
