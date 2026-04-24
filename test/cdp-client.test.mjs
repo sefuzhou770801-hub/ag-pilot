@@ -28,6 +28,33 @@ test("CdpClient matches responses by id", async () => {
   client.close();
 });
 
+test("CdpClient clickAt sends real mouse events", async () => {
+  const socket = new FakeSocket();
+  const client = new CdpClient("ws://example", { WebSocketImpl: class extends FakeSocket {
+    constructor() {
+      super();
+      return socket;
+    }
+  } });
+
+  const click = client.clickAt(12, 34);
+  for (let index = 0; index < 3; index += 1) {
+    while (socket.sent.length <= index) {
+      await new Promise((resolve) => setImmediate(resolve));
+    }
+    const sent = JSON.parse(socket.sent[index]);
+    socket.emit("message", JSON.stringify({ id: sent.id, result: {} }));
+  }
+  await click;
+
+  const events = socket.sent.map((payload) => JSON.parse(payload).params);
+  assert.deepEqual(events.map((event) => event.type), ["mouseMoved", "mousePressed", "mouseReleased"]);
+  assert.equal(events[1].button, "left");
+  assert.equal(events[1].x, 12);
+  assert.equal(events[1].y, 34);
+  client.close();
+});
+
 class FakeSocket extends EventEmitter {
   sent = [];
   readyState = 1;
