@@ -59,7 +59,7 @@ Run the setup script:
 The script updates:
 
 ```text
-~/Library/Application Support/Antigravity/argv.json
+~/.antigravity/argv.json
 ```
 
 It adds:
@@ -114,7 +114,7 @@ The bridge reads the Antigravity CDP port in this order:
 
 1. `AG_CDP_PORT`
 2. `cdpPort` in `state.json`
-3. `autoAcceptV2.cdpPort` in Antigravity user settings, kept only as a compatibility fallback
+3. `autoAcceptV2.cdpPort` in Antigravity user settings, kept only as a legacy compatibility fallback
 4. `9333`
 
 Example `state.json`:

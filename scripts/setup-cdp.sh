@@ -2,7 +2,7 @@
 set -euo pipefail
 
 PORT="${AG_CDP_PORT:-9333}"
-ARGV_PATH="${AG_ARGV_PATH:-$HOME/Library/Application Support/Antigravity/argv.json}"
+ARGV_PATH="${AG_ARGV_PATH:-$HOME/.antigravity/argv.json}"
 
 if ! [[ "$PORT" =~ ^[0-9]+$ ]] || [ "$PORT" -lt 1 ] || [ "$PORT" -gt 65535 ]; then
   echo "Invalid CDP port: $PORT" >&2
@@ -11,15 +11,17 @@ fi
 
 mkdir -p "$(dirname "$ARGV_PATH")"
 
-CURRENT_PORT="$(node -e "
+CURRENT_PORT="$(
+  node - "$ARGV_PATH" <<'NODE'
 const fs = require('fs');
-const file = process.argv[1];
+const file = process.argv[2];
 try {
-  const data = JSON.parse(fs.readFileSync(file, 'utf8'));
-  const port = data['remote-debugging-port'];
-  if (port !== undefined) process.stdout.write(String(port));
+  const text = fs.readFileSync(file, 'utf8');
+  const match = text.match(/^[ \t]*"remote-debugging-port"[ \t]*:[ \t]*([0-9]+)/m);
+  if (match) process.stdout.write(match[1]);
 } catch {}
-" "$ARGV_PATH")"
+NODE
+)"
 
 if [ "$CURRENT_PORT" = "$PORT" ]; then
   echo "Antigravity CDP is already enabled on port $PORT."
@@ -35,26 +37,43 @@ else
   echo "No existing argv.json found. Creating: $ARGV_PATH"
 fi
 
-node -e "
+node - "$ARGV_PATH" "$PORT" <<'NODE'
 const fs = require('fs');
-const file = process.argv[1];
-const port = Number(process.argv[2]);
-let data = {};
+const file = process.argv[2];
+const port = Number(process.argv[3]);
+let text = '';
+
 try {
-  data = JSON.parse(fs.readFileSync(file, 'utf8'));
+  text = fs.readFileSync(file, 'utf8');
 } catch (error) {
   if (error.code !== 'ENOENT') {
-    console.error('Failed to parse argv.json. Restore from backup and fix the JSON first.');
+    console.error('Failed to read argv.json. Restore from backup and check file permissions.');
     process.exit(1);
   }
+  text = '{\n}\n';
 }
-if (!data || Array.isArray(data) || typeof data !== 'object') {
-  console.error('argv.json must contain a JSON object.');
-  process.exit(1);
+
+const portLine = /^[ \t]*"remote-debugging-port"[ \t]*:[ \t]*[0-9]+[ \t]*,?/m;
+if (portLine.test(text)) {
+  text = text.replace(portLine, (line) => line.replace(/[0-9]+/, String(port)));
+} else {
+  const closeIndex = text.lastIndexOf('}');
+  if (closeIndex === -1) {
+    console.error('argv.json must contain a JSON object.');
+    process.exit(1);
+  }
+
+  let before = text.slice(0, closeIndex);
+  const after = text.slice(closeIndex);
+  const lastMeaningful = before.replace(/\s+$/g, '').slice(-1);
+  if (lastMeaningful && lastMeaningful !== '{' && lastMeaningful !== ',') {
+    before = before.replace(/(\S)(\s*)$/s, '$1,$2');
+  }
+  text = `${before}  "remote-debugging-port": ${port}\n${after}`;
 }
-data['remote-debugging-port'] = port;
-fs.writeFileSync(file, JSON.stringify(data, null, 2) + '\\n');
-" "$ARGV_PATH" "$PORT"
+
+fs.writeFileSync(file, text);
+NODE
 
 echo "Antigravity CDP enabled on port $PORT."
 echo "Restart Antigravity for the setting to take effect."
