@@ -75,6 +75,14 @@ node bridge.mjs bind-codex 019xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 http://127.0.0.1:4319/
 ```
 
+安装后台服务：
+
+```bash
+./scripts/install-card-service.sh
+```
+
+安装后，卡片服务会在登录时自动启动；进程退出后也会被 macOS 自动拉起。
+
 ## CLI 速查表
 
 | 命令 | 用途 |
