@@ -4,11 +4,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
-  getAutoAcceptStatus,
-  listAutoAcceptConversations,
+  getAntigravityStatus,
+  listAntigravityConversations,
   readLatestAntigravityReply,
   sendTextToAntigravity,
-} from "./lib/autoaccept-adapter.mjs";
+} from "./lib/antigravity-client.mjs";
 import { findGroup, loadState, saveState } from "./lib/config.mjs";
 import {
   openCodexThread,
@@ -43,12 +43,12 @@ export async function run(cmd, flags) {
 
   if (cmd === "status") {
     const state = await loadState();
-    const autoAccept = await getAutoAcceptStatus().catch((error) => ({ error: error.message }));
+    const antigravity = await getAntigravityStatus().catch((error) => ({ error: error.message }));
     const socketPath = defaultCodexSocketPath();
     return {
       ok: true,
       state,
-      autoAccept,
+      antigravity,
       codex: {
         socketPath,
         socketExists: existsSync(socketPath),
@@ -97,7 +97,7 @@ export async function run(cmd, flags) {
   }
 
   if (cmd === "ag-list") {
-    return { ok: true, conversations: await listAutoAcceptConversations() };
+    return { ok: true, conversations: await listAntigravityConversations() };
   }
 
   if (cmd === "ag-latest") {

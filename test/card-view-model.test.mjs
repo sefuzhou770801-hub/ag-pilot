@@ -16,7 +16,7 @@ test("buildCardViewModel reports the selected CC conversation and mismatch risk"
       },
     },
     status: {
-      autoAccept: { cdp: { connected: true }, plugin: { version: "3.26.5" } },
+      antigravity: { cdp: { connected: true }, config: { cdpPort: 9333, source: "state" } },
       codex: { socketExists: true },
     },
     conversations: [
@@ -56,7 +56,7 @@ test("buildCardViewModel keeps the viewed group title instead of active aliases"
       },
     },
     status: {
-      autoAccept: { cdp: { connected: true }, plugin: { version: "3.26.5" } },
+      antigravity: { cdp: { connected: true }, config: { cdpPort: 9333, source: "state" } },
       codex: { socketExists: true },
     },
     conversations: [
@@ -96,7 +96,7 @@ test("buildCardViewModel does not show active group codex aliases for an unbound
       },
     },
     status: {
-      autoAccept: { cdp: { connected: true }, plugin: { version: "3.26.5" } },
+      antigravity: { cdp: { connected: true }, config: { cdpPort: 9333, source: "state" } },
       codex: { socketExists: true },
     },
     codexDb: {
