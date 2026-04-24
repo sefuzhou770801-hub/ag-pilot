@@ -229,7 +229,12 @@ function renderGroups(groups) {
 }
 
 async function switchGroup(groupId) {
-  await postJson("/api/groups/switch", { groupId });
+  const result = await postJson("/api/groups/switch", { groupId });
+  if (result.antigravitySelection?.ok === false) {
+    el.footerText.textContent = "CC 跳转失败";
+    el.safetyBanner.className = "safety warning";
+    el.safetyText.textContent = "分组已切换，Antigravity 没有跳过去";
+  }
   await openBoundCodex();
 }
 
