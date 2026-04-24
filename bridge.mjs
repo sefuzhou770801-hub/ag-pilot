@@ -9,7 +9,7 @@ import {
   readLatestAntigravityReply,
   sendTextToAntigravity,
 } from "./lib/autoaccept-adapter.mjs";
-import { loadState, saveState } from "./lib/config.mjs";
+import { findGroup, loadState, saveState } from "./lib/config.mjs";
 import {
   openCodexThread,
   probeCodexThread,
@@ -158,6 +158,12 @@ async function requireThreadId(flags) {
   if (flags.thread) return flags.thread;
   if (flags._[0] && flags._[0].startsWith("019")) return flags._.shift();
   const state = await loadState();
+  if (flags.group) {
+    const group = findGroup(state, flags.group);
+    if (!group) throw new Error(`Group not found: ${flags.group}`);
+    if (group.codexThreadId) return group.codexThreadId;
+    throw new Error(`Codex thread is not bound for group: ${group.name}`);
+  }
   if (state.data.codexThreadId) return state.data.codexThreadId;
   throw new Error("Codex thread is not bound. Run bind-codex <threadId> first.");
 }
@@ -165,6 +171,13 @@ async function requireThreadId(flags) {
 async function requireCcTitle(flags, required = true) {
   if (flags.title) return flags.title;
   const state = await loadState();
+  if (flags.group) {
+    const group = findGroup(state, flags.group);
+    if (!group) throw new Error(`Group not found: ${flags.group}`);
+    if (group.ccTitle) return group.ccTitle;
+    if (!required) return undefined;
+    throw new Error(`CC conversation is not bound for group: ${group.name}`);
+  }
   if (state.data.ccTitle) return state.data.ccTitle;
   if (!required) return undefined;
   throw new Error("CC conversation is not bound. Run bind-cc --title <title> first.");
@@ -180,6 +193,8 @@ function parseFlags(values) {
       parsed.thread = values[++i];
     } else if (value === "--title") {
       parsed.title = values[++i];
+    } else if (value === "--group") {
+      parsed.group = values[++i];
     } else if (value === "--text") {
       parsed.text = values[++i];
     } else if (value === "--wait-ms") {
@@ -220,6 +235,8 @@ function help() {
       "node tools/cc-codex-bridge/bridge.mjs status --json",
       "node tools/cc-codex-bridge/bridge.mjs bind-codex <threadId>",
       "node tools/cc-codex-bridge/bridge.mjs bind-cc --title <title>",
+      "node tools/cc-codex-bridge/bridge.mjs codex-send --group <name-or-id> --text <text>",
+      "node tools/cc-codex-bridge/bridge.mjs ag-send --group <name-or-id> --text <text>",
       "node tools/cc-codex-bridge/bridge.mjs cc-to-codex --dry-run",
       "node tools/cc-codex-bridge/bridge.mjs codex-to-cc --dry-run",
     ].join("\n"),
