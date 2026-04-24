@@ -8,3 +8,4 @@
 - Added a local state example file.
 - Fixed group switching so the card's viewed group no longer changes the CLI's default send target.
 - Added `--group` support for targeting a specific group from the CLI.
+- Added a macOS LaunchAgent installer for the card service.

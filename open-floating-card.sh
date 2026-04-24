@@ -3,10 +3,13 @@ set -euo pipefail
 
 PORT="${CC_CODEX_BRIDGE_PORT:-4319}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LOG="$ROOT/card-server.log"
+LABEL="com.zhousefu.cc-codex-bridge.card"
+UID_VALUE="$(id -u)"
 
-if ! lsof -iTCP:"$PORT" -sTCP:LISTEN >/dev/null 2>&1; then
-  nohup node "$ROOT/server.mjs" "$PORT" >"$LOG" 2>&1 &
+if ! launchctl print "gui/$UID_VALUE/$LABEL" >/dev/null 2>&1; then
+  "$ROOT/scripts/install-card-service.sh"
+elif ! lsof -iTCP:"$PORT" -sTCP:LISTEN >/dev/null 2>&1; then
+  launchctl kickstart -k "gui/$UID_VALUE/$LABEL"
 fi
 
 sleep 0.4
