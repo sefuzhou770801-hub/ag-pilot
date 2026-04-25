@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { existsSync } from "node:fs";
+import { existsSync, realpathSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -233,7 +233,15 @@ function sleep(ms) {
 
 function isCliEntrypoint() {
   if (!process.argv[1]) return false;
-  return path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+  return realPath(process.argv[1]) === realPath(fileURLToPath(import.meta.url));
+}
+
+function realPath(filePath) {
+  try {
+    return realpathSync(filePath);
+  } catch {
+    return path.resolve(filePath);
+  }
 }
 
 function help() {
