@@ -6,5 +6,5 @@ const host = "127.0.0.1";
 
 const server = createBridgeServer();
 server.listen(port, host, () => {
-  console.log(`CC-Codex bridge card: http://${host}:${port}/`);
+  console.log(`AG Pilot card: http://${host}:${port}/`);
 });

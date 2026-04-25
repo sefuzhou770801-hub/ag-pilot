@@ -109,7 +109,7 @@ test("ag-send reports retried when both attempts fail", async () => {
 });
 
 async function makeTempDir() {
-  return await mkdir(path.join(os.tmpdir(), `cc-codex-bridge-${Date.now()}-${Math.random()}`), {
+  return await mkdir(path.join(os.tmpdir(), `ag-pilot-${Date.now()}-${Math.random()}`), {
     recursive: true,
   });
 }
