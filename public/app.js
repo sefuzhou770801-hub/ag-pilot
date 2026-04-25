@@ -8,6 +8,7 @@ const $ = (id) => document.getElementById(id);
 const el = {
   groupTabs: $("groupTabs"),
   addGroupBtn: $("addGroupBtn"),
+  headerPill: $("headerPill"),
   ccCard: $("ccCard"),
   ccName: $("ccName"),
   ccStatus: $("ccStatus"),
@@ -24,6 +25,9 @@ const el = {
   safetyBanner: $("safetyBanner"),
   safetyDot: $("safetyDot"),
   safetyText: $("safetyText"),
+  metricCdp: $("metricCdp"),
+  metricTargets: $("metricTargets"),
+  metricIpc: $("metricIpc"),
   footerText: $("footerText"),
   footerTime: $("footerTime"),
 };
@@ -77,6 +81,11 @@ async function refresh() {
     render(lastSnapshot);
   } catch (err) {
     el.footerText.textContent = `连接失败`;
+    el.headerPill.textContent = "Offline";
+    el.headerPill.className = "header-pill danger";
+    el.metricCdp.textContent = "off";
+    el.metricTargets.textContent = "0";
+    el.metricIpc.textContent = "off";
     el.safetyBanner.className = "safety danger";
     el.safetyText.textContent = "桥接器未响应";
   }
@@ -98,10 +107,12 @@ function render(snap) {
     el.ccName.textContent = v.cc.boundTitle;
     el.ccStatus.textContent = "✓ 已绑定";
     el.ccStatus.className = "node-status";
+    el.ccCard.classList.remove("unbound");
   } else {
     el.ccName.textContent = "未绑定 CC 对话";
     el.ccStatus.textContent = "点击绑定";
     el.ccStatus.className = "node-status unbound";
+    el.ccCard.classList.add("unbound");
   }
 
   // CC 下拉列表
@@ -126,10 +137,12 @@ function render(snap) {
     el.codexName.textContent = v.codex.boundTitle || v.codex.boundThreadShort;
     el.codexStatus.textContent = "✓";
     el.codexStatus.className = "node-status";
+    el.codexCard.classList.remove("unbound");
   } else {
     el.codexName.textContent = "未绑定 Codex 对话";
     el.codexStatus.textContent = "点击绑定";
     el.codexStatus.className = "node-status unbound";
+    el.codexCard.classList.add("unbound");
   }
 
   // Codex 下拉列表
@@ -150,6 +163,7 @@ function render(snap) {
   });
 
   renderSafety(snap);
+  renderTelemetry(v);
 
   // ---- 底部 ----
   el.footerText.textContent = v.bridge.cdpConnected ? "周瑟夫" : "未连接";
@@ -161,6 +175,14 @@ function renderSafety(snap) {
   const risk = v.risk;
   el.safetyBanner.className = `safety ${risk.level}`;
   el.safetyText.textContent = risk.message;
+  el.headerPill.className = `header-pill ${risk.level}`;
+  el.headerPill.textContent = risk.level === "ok" ? "Ready" : risk.level === "warning" ? "Check" : "Offline";
+}
+
+function renderTelemetry(v) {
+  el.metricCdp.textContent = v.bridge.cdpConnected ? `:${v.bridge.cdpPort ?? "on"}` : "off";
+  el.metricTargets.textContent = String(v.bridge.conversationCount ?? 0);
+  el.metricIpc.textContent = v.codex.socketReady ? "ready" : "off";
 }
 
 async function bindCcConversation(title) {
