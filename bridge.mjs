@@ -10,7 +10,16 @@ import {
   readLatestAntigravityReply,
   sendTextToAntigravity,
 } from "./lib/antigravity-client.mjs";
-import { findGroup, findGroupByCodexThreadId, getViewGroup, loadState, saveState, updateGroup, updateViewGroup } from "./lib/config.mjs";
+import {
+  findGroup,
+  findGroupByCodexThreadId,
+  getViewGroup,
+  loadState,
+  saveState,
+  updateGroup,
+  updateGroupsByCodexThreadId,
+  updateViewGroup,
+} from "./lib/config.mjs";
 import {
   openCodexThread,
   probeCodexThread,
@@ -111,6 +120,12 @@ export async function run(cmd, flags) {
     return result;
   }
 
+  if (cmd === "codex-idle") {
+    const threadId = flags.thread ?? flags._[0];
+    if (!threadId) throw new Error("Usage: codex-idle --thread <threadId>");
+    return await setCodexBusyForThread(threadId, false);
+  }
+
   if (cmd === "ag-list") {
     return { ok: true, conversations: await listAntigravityConversations() };
   }
@@ -157,7 +172,7 @@ export async function run(cmd, flags) {
       };
     }
     const sent = await sendTextToAntigravity({ title: route.title, text: route.reply.text });
-    await setCodexBusy(route.group?.id, false);
+    await setCodexBusyForThread(route.threadId, false);
     return { ok: true, direction: "codex-to-cc", source: route.reply, routeSource: route.routeSource, antigravity: sent };
   }
 
@@ -333,6 +348,19 @@ async function setCodexBusy(groupId, codexBusy) {
   await saveState(data);
 }
 
+async function setCodexBusyForThread(threadId, codexBusy) {
+  const state = await loadState();
+  const result = updateGroupsByCodexThreadId(state, threadId, { codexBusy });
+  const path = await saveState(result.data);
+  return {
+    ok: true,
+    path,
+    threadId,
+    codexBusy,
+    groups: result.groups.map((group) => ({ id: group.id, name: group.name })),
+  };
+}
+
 function parseFlags(values) {
   const parsed = { _: [] };
   for (let i = 0; i < values.length; i += 1) {
@@ -396,6 +424,7 @@ function help() {
       "node tools/cc-codex-bridge/bridge.mjs bind-codex <threadId>",
       "node tools/cc-codex-bridge/bridge.mjs bind-cc --title <title>",
       "node tools/cc-codex-bridge/bridge.mjs codex-send --group <name-or-id> --text <text>",
+      "node tools/cc-codex-bridge/bridge.mjs codex-idle --thread <threadId>",
       "node tools/cc-codex-bridge/bridge.mjs ag-send --group <name-or-id> --text <text>",
       "node tools/cc-codex-bridge/bridge.mjs cc-to-codex --dry-run",
       "node tools/cc-codex-bridge/bridge.mjs codex-to-cc --auto-route --dry-run",

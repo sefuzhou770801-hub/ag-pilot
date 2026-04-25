@@ -9,6 +9,7 @@ import {
   readBridgeConfig,
   statePathFor,
   updateGroup,
+  updateGroupsByCodexThreadId,
 } from "../lib/config.mjs";
 
 test("readBridgeConfig uses AG_CDP_PORT before state and Antigravity settings", async () => {
@@ -85,6 +86,23 @@ test("updateGroup can mark one group's Codex state as busy", () => {
 
   assert.equal(data.groups.find((group) => group.id === "default").codexBusy, false);
   assert.equal(data.groups.find((group) => group.id === "open-source").codexBusy, true);
+});
+
+test("updateGroupsByCodexThreadId clears every group bound to the same thread", () => {
+  const result = updateGroupsByCodexThreadId({
+    groups: [
+      { id: "open-source", name: "开源方案", codexThreadId: "019same", codexBusy: true },
+      { id: "streamdeck", name: "streamdeck", codexThreadId: "019same", codexBusy: true },
+      { id: "wiki", name: "个人维基", codexThreadId: "019wiki", codexBusy: true },
+    ],
+    activeGroupId: "open-source",
+    viewGroupId: "open-source",
+  }, "019same", { codexBusy: false });
+
+  assert.deepEqual(result.groups.map((group) => group.name), ["开源方案", "streamdeck"]);
+  assert.equal(result.data.groups.find((group) => group.id === "open-source").codexBusy, false);
+  assert.equal(result.data.groups.find((group) => group.id === "streamdeck").codexBusy, false);
+  assert.equal(result.data.groups.find((group) => group.id === "wiki").codexBusy, true);
 });
 
 async function makeTempDir() {
