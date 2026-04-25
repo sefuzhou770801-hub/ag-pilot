@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { conversationClickPointScript, findTargetByTitle } from "../lib/antigravity-client.mjs";
+import { conversationClickPointScript, findBusyReadTarget, findTargetByTitle } from "../lib/antigravity-client.mjs";
 
 test("findTargetByTitle does not match empty or unrelated target titles", () => {
   const targets = [
@@ -41,4 +41,29 @@ test("conversationClickPointScript returns coordinates instead of DOM clicking",
   assert.match(script, /getBoundingClientRect/);
   assert.match(script, /requestAnimationFrame/);
   assert.doesNotMatch(script, /\.click\(/);
+});
+
+test("busy read target uses the current chat without selecting a bound title", () => {
+  const targets = [
+    {
+      type: "page",
+      title: "Manager",
+      url: "vscode-file://vscode-app/workbench.html",
+      webSocketDebuggerUrl: "ws://manager",
+    },
+    {
+      type: "page",
+      title: "Current User Chat",
+      url: "vscode-webview://current-chat/index.html",
+      webSocketDebuggerUrl: "ws://current",
+    },
+    {
+      type: "page",
+      title: "Bound Group Chat",
+      url: "vscode-file://vscode-app/workbench.html",
+      webSocketDebuggerUrl: "ws://bound",
+    },
+  ];
+
+  assert.equal(findBusyReadTarget(targets)?.webSocketDebuggerUrl, "ws://current");
 });
