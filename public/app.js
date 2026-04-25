@@ -249,6 +249,14 @@ function renderGroups(groups) {
       pulseArrow();
       await switchGroup(group.id);
     });
+    tab.addEventListener("contextmenu", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (groups.length <= 1) return;
+      if (!confirm(`删除分组「${group.name}」？`)) return;
+      await postJson("/api/groups/delete", { groupId: group.id });
+      await refresh();
+    });
     el.groupTabs.appendChild(tab);
   });
 }
