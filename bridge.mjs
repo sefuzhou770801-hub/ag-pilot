@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { existsSync, realpathSync } from "node:fs";
+import { stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -9,14 +10,19 @@ import {
   readLatestAntigravityReply,
   sendTextToAntigravity,
 } from "./lib/antigravity-client.mjs";
-import { findGroup, getViewGroup, loadState, saveState, updateGroup, updateViewGroup } from "./lib/config.mjs";
+import { findGroup, findGroupByCodexThreadId, getViewGroup, loadState, saveState, updateGroup, updateViewGroup } from "./lib/config.mjs";
 import {
   openCodexThread,
   probeCodexThread,
   sendToCodexThread,
   defaultCodexSocketPath,
 } from "./lib/codex-ipc-client.mjs";
-import { readLatestAssistantReplyForThread } from "./lib/codex-session-log.mjs";
+import {
+  extractThreadIdFromRolloutPath,
+  findLatestCodexRollout,
+  readLatestAssistantReply,
+  readLatestAssistantReplyForThread,
+} from "./lib/codex-session-log.mjs";
 
 if (isCliEntrypoint()) {
   const args = process.argv.slice(2);
@@ -135,15 +141,24 @@ export async function run(cmd, flags) {
   }
 
   if (cmd === "codex-to-cc") {
-    const threadRoute = await requireThreadRoute(flags);
-    const ccRoute = await requireCcRoute(flags);
-    const reply = await readLatestAssistantReplyForThread(threadRoute.threadId);
+    const route = flags.autoRoute
+      ? await resolveCodexToCcAutoRoute(flags)
+      : await resolveCodexToCcManualRoute(flags);
     if (flags.dryRun) {
-      return { ok: true, dryRun: true, direction: "codex-to-cc", source: reply, targetTitle: ccRoute.title };
+      return {
+        ok: true,
+        dryRun: true,
+        direction: "codex-to-cc",
+        source: route.reply,
+        targetTitle: route.title,
+        targetGroupId: route.group?.id ?? "",
+        targetGroupName: route.group?.name ?? "",
+        routeSource: route.routeSource,
+      };
     }
-    const sent = await sendTextToAntigravity({ title: ccRoute.title, text: reply.text });
-    await setCodexBusy(threadRoute.group?.id ?? ccRoute.group?.id, false);
-    return { ok: true, direction: "codex-to-cc", source: reply, antigravity: sent };
+    const sent = await sendTextToAntigravity({ title: route.title, text: route.reply.text });
+    await setCodexBusy(route.group?.id, false);
+    return { ok: true, direction: "codex-to-cc", source: route.reply, routeSource: route.routeSource, antigravity: sent };
   }
 
   throw new Error(`Unknown command: ${cmd}`);
@@ -173,6 +188,112 @@ export function resolveRoutingGroup(state, flags = {}) {
     return group;
   }
   return getViewGroup(state);
+}
+
+export async function resolveCodexToCcAutoRoute(flags = {}, options = {}) {
+  const state = options.state ?? await loadState();
+  const hookPayload = Object.hasOwn(options, "hookPayload")
+    ? options.hookPayload
+    : await readHookPayloadFromStdin();
+  const threadId = flags.thread ?? extractThreadIdFromHookPayload(hookPayload);
+
+  if (threadId) {
+    const group = findGroupByCodexThreadId(state, threadId);
+    if (!group) throw new Error(`No group bound to Codex thread: ${threadId}`);
+    if (!group.ccTitle) throw new Error(`CC conversation is not bound for group: ${group.name}`);
+    return {
+      threadId,
+      group,
+      title: group.ccTitle,
+      reply: await readAutoRouteReply(threadId, hookPayload, options.sessionsRoot),
+      routeSource: hookPayload ? "hook" : "thread",
+    };
+  }
+
+  return await resolveLatestBoundCodexToCcRoute(state, options.sessionsRoot);
+}
+
+async function resolveCodexToCcManualRoute(flags) {
+  const threadRoute = await requireThreadRoute(flags);
+  const ccRoute = await requireCcRoute(flags);
+  return {
+    threadId: threadRoute.threadId,
+    group: threadRoute.group ?? ccRoute.group,
+    title: ccRoute.title,
+    reply: await readLatestAssistantReplyForThread(threadRoute.threadId),
+    routeSource: "view-group",
+  };
+}
+
+async function resolveLatestBoundCodexToCcRoute(state, sessionsRoot) {
+  const groups = Array.isArray(state?.data?.groups) ? state.data.groups : Array.isArray(state?.groups) ? state.groups : [];
+  const candidates = [];
+
+  for (const group of groups) {
+    if (!group?.codexThreadId || !group?.ccTitle) continue;
+    try {
+      const rolloutPath = await findLatestCodexRollout(group.codexThreadId, sessionsRoot);
+      const fileStat = await stat(rolloutPath);
+      candidates.push({ group, threadId: group.codexThreadId, rolloutPath, mtimeMs: fileStat.mtimeMs });
+    } catch {
+      // Missing or unreadable Codex transcripts should not block other bound groups.
+    }
+  }
+
+  candidates.sort((a, b) => b.mtimeMs - a.mtimeMs || b.rolloutPath.localeCompare(a.rolloutPath));
+  const latest = candidates[0];
+  if (!latest) throw new Error("No bound Codex thread has a readable latest reply.");
+
+  return {
+    threadId: latest.threadId,
+    group: latest.group,
+    title: latest.group.ccTitle,
+    reply: await readLatestAssistantReply(latest.rolloutPath),
+    routeSource: "latest-bound-thread",
+  };
+}
+
+async function readAutoRouteReply(threadId, hookPayload, sessionsRoot) {
+  const transcriptPath = hookPayload?.transcript_path ?? hookPayload?.transcriptPath;
+  const hookText = extractHookAssistantText(hookPayload?.last_assistant_message);
+  if (hookText) {
+    return {
+      text: hookText,
+      line: null,
+      timestamp: null,
+      rolloutPath: transcriptPath ?? null,
+    };
+  }
+  if (transcriptPath) return await readLatestAssistantReply(transcriptPath);
+  return await readLatestAssistantReplyForThread(threadId, sessionsRoot);
+}
+
+function extractThreadIdFromHookPayload(hookPayload) {
+  if (!hookPayload || typeof hookPayload !== "object") return "";
+  const direct = hookPayload.thread_id ?? hookPayload.threadId ?? hookPayload.conversation_id ?? hookPayload.conversationId;
+  if (direct) return String(direct);
+  return extractThreadIdFromRolloutPath(hookPayload.transcript_path ?? hookPayload.transcriptPath);
+}
+
+function extractHookAssistantText(value) {
+  if (typeof value === "string") return value.trim();
+  return "";
+}
+
+async function readHookPayloadFromStdin() {
+  if (process.stdin.isTTY) return null;
+
+  let raw = "";
+  for await (const chunk of process.stdin) {
+    raw += chunk;
+  }
+  if (!raw.trim()) return null;
+
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
 }
 
 async function requireThreadId(flags) {
@@ -230,6 +351,8 @@ function parseFlags(values) {
       parsed.waitMs = Number(values[++i]);
     } else if (value === "--dry-run") {
       parsed.dryRun = true;
+    } else if (value === "--auto-route") {
+      parsed.autoRoute = true;
     } else {
       parsed._.push(value);
     }
@@ -275,7 +398,7 @@ function help() {
       "node tools/cc-codex-bridge/bridge.mjs codex-send --group <name-or-id> --text <text>",
       "node tools/cc-codex-bridge/bridge.mjs ag-send --group <name-or-id> --text <text>",
       "node tools/cc-codex-bridge/bridge.mjs cc-to-codex --dry-run",
-      "node tools/cc-codex-bridge/bridge.mjs codex-to-cc --dry-run",
+      "node tools/cc-codex-bridge/bridge.mjs codex-to-cc --auto-route --dry-run",
     ].join("\n"),
   };
 }
