@@ -420,14 +420,14 @@ function realPath(filePath) {
 function help() {
   return {
     usage: [
-      "node tools/cc-codex-bridge/bridge.mjs status --json",
-      "node tools/cc-codex-bridge/bridge.mjs bind-codex <threadId>",
-      "node tools/cc-codex-bridge/bridge.mjs bind-cc --title <title>",
-      "node tools/cc-codex-bridge/bridge.mjs codex-send --group <name-or-id> --text <text>",
-      "node tools/cc-codex-bridge/bridge.mjs codex-idle --thread <threadId>",
-      "node tools/cc-codex-bridge/bridge.mjs ag-send --group <name-or-id> --text <text>",
-      "node tools/cc-codex-bridge/bridge.mjs cc-to-codex --dry-run",
-      "node tools/cc-codex-bridge/bridge.mjs codex-to-cc --auto-route --dry-run",
+      "node ag-pilot/bridge.mjs status --json",
+      "node ag-pilot/bridge.mjs bind-codex <threadId>",
+      "node ag-pilot/bridge.mjs bind-cc --title <title>",
+      "node ag-pilot/bridge.mjs codex-send --group <name-or-id> --text <text>",
+      "node ag-pilot/bridge.mjs codex-idle --thread <threadId>",
+      "node ag-pilot/bridge.mjs ag-send --group <name-or-id> --text <text>",
+      "node ag-pilot/bridge.mjs cc-to-codex --dry-run",
+      "node ag-pilot/bridge.mjs codex-to-cc --auto-route --dry-run",
     ].join("\n"),
   };
 }

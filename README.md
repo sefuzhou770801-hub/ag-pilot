@@ -1,14 +1,12 @@
-# CC-Codex Bridge
+# AG Pilot
 
 > Let Antigravity and Codex talk to each other. No copy. No paste. Just supervised local routing.
-
-![CC-Codex Bridge banner](docs/images/banner.png)
 
 [![Local first](https://img.shields.io/badge/local--first-100%25-22d3ee?style=for-the-badge)](#why-bridge)
 [![macOS](https://img.shields.io/badge/platform-macOS-a78bfa?style=for-the-badge)](#requirements)
 [![MIT](https://img.shields.io/badge/license-MIT-34d399?style=for-the-badge)](LICENSE)
 
-CC-Codex Bridge is an **AI agent communication bridge** for people who run Antigravity (CC) and Codex side by side. Bind one CC conversation to one Codex thread, then route messages through CDP and local IPC without using the clipboard as middleware.
+AG Pilot is an **AI agent communication bridge** for people who run Antigravity and Codex side by side. Bind one Antigravity conversation to one Codex thread, then route messages through CDP and local IPC without using the clipboard as middleware.
 
 ## Demo
 
@@ -24,7 +22,7 @@ Click a group tab in the local card and both sides follow the binding:
 
 When two agents collaborate, the fragile part is not the model. It is the human copy-paste loop.
 
-CC-Codex Bridge turns that loop into a small local control plane:
+AG Pilot turns that loop into a small local control plane:
 
 - **Explicit group bindings**: each group owns one CC conversation and one Codex thread.
 - **Real Antigravity selection**: CDP sends actual mouse events, not brittle DOM clicks.
@@ -35,8 +33,8 @@ CC-Codex Bridge turns that loop into a small local control plane:
 ## Quick Start
 
 ```bash
-git clone https://github.com/sefuzhou770801-hub/cc-codex-bridge.git
-cd cc-codex-bridge
+git clone https://github.com/sefuzhou770801-hub/ag-pilot.git
+cd ag-pilot
 cp state.example.json state.json
 ./scripts/setup-cdp.sh
 ```
@@ -68,7 +66,7 @@ Install the login service if you want the card to run in the background:
 flowchart LR
   Human["Human operator"]
   Card["Local status card<br/>127.0.0.1:4319"]
-  Bridge["CC-Codex Bridge<br/>CLI + HTTP API"]
+  Bridge["AG Pilot<br/>CLI + HTTP API"]
   State["state.json<br/>group bindings"]
   AG["Antigravity / CC"]
   CDP["Chrome DevTools Protocol"]
@@ -153,12 +151,9 @@ Runtime bindings live in `state.json`:
 
 The bridge reads the Antigravity CDP port in this order:
 
-1. `AG_CDP_PORT`
+1. `AG_CDP_PORT` environment variable
 2. `cdpPort` in `state.json`
-3. legacy `autoAcceptV2.cdpPort` from Antigravity settings
-4. `9333`
-
-The legacy fallback is only for compatibility. The bridge does not depend on AutoAccept or Swarm.
+3. Default `9333`
 
 ## CLI Reference
 

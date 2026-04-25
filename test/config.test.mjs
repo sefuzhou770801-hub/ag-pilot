@@ -53,7 +53,7 @@ test("readBridgeConfig keeps old Antigravity CDP setting as fallback", async () 
 
 test("statePathFor uses explicit paths before the project-local default", () => {
   assert.equal(statePathFor({ statePath: "/tmp/bridge-state.json" }), "/tmp/bridge-state.json");
-  assert.equal(statePathFor({ projectRoot: "/Users/example/cc-codex-bridge" }), "/Users/example/cc-codex-bridge/state.json");
+  assert.equal(statePathFor({ projectRoot: "/Users/example/ag-pilot" }), "/Users/example/ag-pilot/state.json");
   assert.match(statePathFor(), /ag-pilot\/state\.json$/);
 });
 
@@ -106,7 +106,7 @@ test("updateGroupsByCodexThreadId clears every group bound to the same thread", 
 });
 
 async function makeTempDir() {
-  return await mkdir(path.join(os.tmpdir(), `cc-codex-bridge-${Date.now()}-${Math.random()}`), {
+  return await mkdir(path.join(os.tmpdir(), `ag-pilot-${Date.now()}-${Math.random()}`), {
     recursive: true,
   });
 }
