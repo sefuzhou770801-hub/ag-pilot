@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
+import { mkdir, writeFile } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import test from "node:test";
 
-import { resolveRoutingGroup, sendTextToAntigravityWithRetry } from "../bridge.mjs";
+import { resolveCodexToCcAutoRoute, resolveRoutingGroup, sendTextToAntigravityWithRetry } from "../bridge.mjs";
 
 const groupedState = {
   data: {
@@ -38,6 +41,28 @@ test("routing can target a fixed group by name", () => {
   assert.equal(group.name, "默认分组");
   assert.equal(group.ccTitle, "Synchronizing Codex App Messages");
   assert.equal(group.codexThreadId, "019default");
+});
+
+test("codex-to-cc auto route uses the hook transcript thread instead of view group", async () => {
+  const root = await makeTempDir();
+  const rolloutPath = path.join(root, "rollout-2026-04-25T12-00-00-019default.jsonl");
+  await writeFile(rolloutPath, "");
+
+  const route = await resolveCodexToCcAutoRoute(
+    { autoRoute: true },
+    {
+      state: groupedState,
+      hookPayload: {
+        transcript_path: rolloutPath,
+        last_assistant_message: "done from default",
+      },
+    },
+  );
+
+  assert.equal(route.threadId, "019default");
+  assert.equal(route.group.name, "默认分组");
+  assert.equal(route.title, "Synchronizing Codex App Messages");
+  assert.equal(route.reply.text, "done from default");
 });
 
 test("ag-send retries once after the first failure", async () => {
@@ -82,3 +107,9 @@ test("ag-send reports retried when both attempts fail", async () => {
 
   assert.equal(attempts, 2);
 });
+
+async function makeTempDir() {
+  return await mkdir(path.join(os.tmpdir(), `cc-codex-bridge-${Date.now()}-${Math.random()}`), {
+    recursive: true,
+  });
+}

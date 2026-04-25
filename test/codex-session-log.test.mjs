@@ -5,6 +5,7 @@ import path from "node:path";
 import test from "node:test";
 
 import {
+  extractThreadIdFromRolloutPath,
   findLatestCodexRollout,
   listRecentCodexThreads,
   readLatestAssistantReply,
@@ -61,6 +62,14 @@ test("listRecentCodexThreads returns newest unique thread ids", async () => {
   const threads = await listRecentCodexThreads(root, 2);
 
   assert.deepEqual(threads.map((item) => item.threadId), ["thread-a", "thread-b"]);
+});
+
+test("extractThreadIdFromRolloutPath reads the thread id from a rollout filename", () => {
+  const threadId = extractThreadIdFromRolloutPath(
+    "/tmp/rollout-2026-04-25T12-00-00-019dc2e3-36fa-76c2-8608-f7603db92efb.jsonl",
+  );
+
+  assert.equal(threadId, "019dc2e3-36fa-76c2-8608-f7603db92efb");
 });
 
 function item(type, payload) {
