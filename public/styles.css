@@ -275,6 +275,11 @@ h1 {
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.3), 0 0 24px rgba(34, 211, 238, 0.1);
 }
 
+.node-card.busy {
+  border-color: rgba(251, 191, 36, 0.42);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.3), 0 0 28px rgba(251, 191, 36, 0.12);
+}
+
 .node-card.unbound::before {
   opacity: 0.18;
 }
@@ -311,6 +316,12 @@ h1 {
   box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.45);
 }
 
+.node-card.busy .node-dot {
+  background: var(--amber);
+  box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.54);
+  animation-duration: 1.05s;
+}
+
 .node-name {
   min-width: 0;
   color: var(--text-1);
@@ -334,6 +345,10 @@ h1 {
 
 .node-status.unbound,
 .node-status.warning {
+  color: var(--amber);
+}
+
+.node-status.busy {
   color: var(--amber);
 }
 

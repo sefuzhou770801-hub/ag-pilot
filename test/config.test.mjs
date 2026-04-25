@@ -5,8 +5,10 @@ import path from "node:path";
 import test from "node:test";
 
 import {
+  normalizeStateData,
   readBridgeConfig,
   statePathFor,
+  updateGroup,
 } from "../lib/config.mjs";
 
 test("readBridgeConfig uses AG_CDP_PORT before state and Antigravity settings", async () => {
@@ -52,6 +54,37 @@ test("statePathFor uses explicit paths before the project-local default", () => 
   assert.equal(statePathFor({ statePath: "/tmp/bridge-state.json" }), "/tmp/bridge-state.json");
   assert.equal(statePathFor({ projectRoot: "/Users/example/cc-codex-bridge" }), "/Users/example/cc-codex-bridge/state.json");
   assert.match(statePathFor(), /cc-codex-bridge\/state\.json$/);
+});
+
+test("normalizeStateData adds codex busy state to groups", () => {
+  const data = normalizeStateData({
+    groups: [
+      {
+        id: "default",
+        name: "默认分组",
+        ccTitle: "CC",
+        codexThreadId: "019thread",
+      },
+    ],
+    activeGroupId: "default",
+    viewGroupId: "default",
+  });
+
+  assert.equal(data.groups[0].codexBusy, false);
+});
+
+test("updateGroup can mark one group's Codex state as busy", () => {
+  const data = updateGroup({
+    groups: [
+      { id: "default", name: "默认分组", codexBusy: false },
+      { id: "open-source", name: "开源方案", codexBusy: false },
+    ],
+    activeGroupId: "default",
+    viewGroupId: "open-source",
+  }, "open-source", { codexBusy: true });
+
+  assert.equal(data.groups.find((group) => group.id === "default").codexBusy, false);
+  assert.equal(data.groups.find((group) => group.id === "open-source").codexBusy, true);
 });
 
 async function makeTempDir() {
