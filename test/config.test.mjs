@@ -54,7 +54,7 @@ test("readBridgeConfig keeps old Antigravity CDP setting as fallback", async () 
 test("statePathFor uses explicit paths before the project-local default", () => {
   assert.equal(statePathFor({ statePath: "/tmp/bridge-state.json" }), "/tmp/bridge-state.json");
   assert.equal(statePathFor({ projectRoot: "/Users/example/cc-codex-bridge" }), "/Users/example/cc-codex-bridge/state.json");
-  assert.match(statePathFor(), /cc-codex-bridge\/state\.json$/);
+  assert.match(statePathFor(), /ag-pilot\/state\.json$/);
 });
 
 test("normalizeStateData adds codex busy state to groups", () => {
