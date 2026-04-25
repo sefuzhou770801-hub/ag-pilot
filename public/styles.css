@@ -661,3 +661,124 @@ h1 {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ---- 模态框 ---- */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: none;
+  place-items: center;
+  background: rgba(4, 6, 12, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.modal-overlay.open {
+  display: grid;
+}
+
+.modal-box {
+  width: min(340px, calc(100vw - 40px));
+  padding: 22px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--panel-shadow);
+  animation: modal-in 180ms ease;
+}
+
+.modal-title {
+  margin-bottom: 16px;
+  color: var(--text-1);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.modal-input {
+  width: 100%;
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+  color: var(--text-1);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  outline: none;
+  transition: border-color 160ms ease;
+}
+
+.modal-input:focus {
+  border-color: var(--cyan);
+}
+
+.modal-input.hidden {
+  display: none;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.modal-btn {
+  flex: 1;
+  height: 38px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+  color: var(--text-2);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  transition: transform 140ms ease, border-color 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.modal-btn:hover {
+  color: var(--text-1);
+  border-color: var(--line-strong);
+  background: var(--surface-strong);
+}
+
+.modal-btn:active {
+  transform: scale(0.97);
+}
+
+.modal-btn--confirm {
+  border-color: rgba(34, 211, 238, 0.36);
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.16), rgba(167, 139, 250, 0.14));
+  color: var(--text-1);
+}
+
+.modal-btn--confirm:hover {
+  border-color: rgba(34, 211, 238, 0.52);
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.24), rgba(167, 139, 250, 0.2));
+}
+
+.modal-btn--danger {
+  border-color: rgba(251, 113, 133, 0.34);
+  background: rgba(251, 113, 133, 0.12);
+  color: var(--red);
+}
+
+.modal-btn--danger:hover {
+  border-color: rgba(251, 113, 133, 0.52);
+  background: rgba(251, 113, 133, 0.2);
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}

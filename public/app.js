@@ -1,6 +1,6 @@
 /* ============================================================
-   CC Codex Bridge — 卡片前端逻辑 V2
-   只做状态确认 + 下拉绑定，没有发送按钮
+   AG Pilot — 卡片前端逻辑
+   状态确认 + 下拉绑定 + 分组管理
    ============================================================ */
 
 const $ = (id) => document.getElementById(id);
@@ -30,6 +30,11 @@ const el = {
   metricIpc: $("metricIpc"),
   footerText: $("footerText"),
   footerTime: $("footerTime"),
+  modalOverlay: $("modalOverlay"),
+  modalTitle: $("modalTitle"),
+  modalInput: $("modalInput"),
+  modalCancel: $("modalCancel"),
+  modalConfirm: $("modalConfirm"),
 };
 
 let lastSnapshot = null;
@@ -39,10 +44,15 @@ let uiBusy = false;
 
 el.addGroupBtn.addEventListener("click", async (e) => {
   e.stopPropagation();
-  const name = prompt("新分组名称", `分组 ${(lastSnapshot?.view?.groups?.length ?? 0) + 1}`);
-  const trimmed = String(name ?? "").trim();
-  if (!trimmed) return;
-  await postJson("/api/groups/create", { name: trimmed });
+  const name = await showModal({
+    title: "新建分组",
+    input: true,
+    placeholder: `分组 ${(lastSnapshot?.view?.groups?.length ?? 0) + 1}`,
+    defaultValue: `分组 ${(lastSnapshot?.view?.groups?.length ?? 0) + 1}`,
+    confirmText: "创建",
+  });
+  if (!name) return;
+  await postJson("/api/groups/create", { name });
   pulseArrow();
   await refresh();
 });
@@ -253,7 +263,13 @@ function renderGroups(groups) {
       e.preventDefault();
       e.stopPropagation();
       if (groups.length <= 1) return;
-      if (!confirm(`删除分组「${group.name}」？`)) return;
+      const ok = await showModal({
+        title: `删除分组「${group.name}」？`,
+        input: false,
+        confirmText: "删除",
+        danger: true,
+      });
+      if (!ok) return;
       await postJson("/api/groups/delete", { groupId: group.id });
       await refresh();
     });
@@ -336,6 +352,44 @@ function pulseArrow() {
 }
 
 /* ---- 工具函数 ---- */
+
+function showModal({ title = "", input = false, placeholder = "", defaultValue = "", confirmText = "确定", danger = false } = {}) {
+  return new Promise((resolve) => {
+    el.modalTitle.textContent = title;
+    el.modalInput.classList.toggle("hidden", !input);
+    el.modalInput.placeholder = placeholder;
+    el.modalInput.value = defaultValue;
+    el.modalConfirm.textContent = confirmText;
+    el.modalConfirm.className = `modal-btn ${danger ? "modal-btn--danger" : "modal-btn--confirm"}`;
+    el.modalOverlay.classList.add("open");
+    if (input) el.modalInput.focus();
+
+    function cleanup() {
+      el.modalOverlay.classList.remove("open");
+      el.modalCancel.removeEventListener("click", onCancel);
+      el.modalConfirm.removeEventListener("click", onConfirm);
+      el.modalInput.removeEventListener("keydown", onKey);
+      el.modalOverlay.removeEventListener("click", onBackdrop);
+    }
+    function onCancel() { cleanup(); resolve(input ? null : false); }
+    function onConfirm() {
+      const val = input ? el.modalInput.value.trim() : true;
+      cleanup();
+      resolve(val || (input ? null : true));
+    }
+    function onKey(e) {
+      if (e.key === "Enter") onConfirm();
+      if (e.key === "Escape") onCancel();
+    }
+    function onBackdrop(e) {
+      if (e.target === el.modalOverlay) onCancel();
+    }
+    el.modalCancel.addEventListener("click", onCancel);
+    el.modalConfirm.addEventListener("click", onConfirm);
+    el.modalInput.addEventListener("keydown", onKey);
+    el.modalOverlay.addEventListener("click", onBackdrop);
+  });
+}
 
 async function postJson(url, body) {
   const res = await fetch(url, {
