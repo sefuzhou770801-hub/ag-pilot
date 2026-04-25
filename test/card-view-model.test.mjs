@@ -116,3 +116,37 @@ test("buildCardViewModel does not show active group codex aliases for an unbound
   assert.equal(model.risk.level, "warning");
   assert.match(model.risk.message, /Codex 对话未绑定/);
 });
+
+test("buildCardViewModel reports both sides as busy", () => {
+  const model = buildCardViewModel({
+    state: {
+      data: {
+        groups: [
+          {
+            id: "open-source",
+            name: "开源方案",
+            ccTitle: "Decoupling Antigravity-Codex Bridge",
+            codexThreadId: "019opensource",
+            codexBusy: true,
+          },
+        ],
+        activeGroupId: "open-source",
+        viewGroupId: "open-source",
+      },
+    },
+    status: {
+      antigravity: { cdp: { connected: true }, config: { cdpPort: 9333, source: "state" } },
+      codex: { socketExists: true },
+    },
+    conversations: [
+      { title: "Decoupling Antigravity-Codex Bridge", status: "active", selected: true, running: true, recent: true },
+    ],
+    antigravityBusy: { known: true, busy: true },
+  });
+
+  assert.equal(model.cc.busy, true);
+  assert.equal(model.cc.statusLabel, "思考中");
+  assert.equal(model.codex.busy, true);
+  assert.equal(model.codex.statusLabel, "执行中");
+  assert.equal(model.risk.message, "双向执行中");
+});

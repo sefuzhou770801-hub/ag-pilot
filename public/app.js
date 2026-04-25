@@ -105,14 +105,16 @@ function render(snap) {
   // ---- CC 节点 ----
   if (v.cc.boundTitle) {
     el.ccName.textContent = v.cc.boundTitle;
-    el.ccStatus.textContent = "✓ 已绑定";
-    el.ccStatus.className = "node-status";
+    el.ccStatus.textContent = v.cc.statusLabel ?? "空闲";
+    el.ccStatus.className = `node-status${v.cc.busy ? " busy" : v.cc.busyKnown ? "" : " warning"}`;
     el.ccCard.classList.remove("unbound");
+    el.ccCard.classList.toggle("busy", v.cc.busy === true);
   } else {
     el.ccName.textContent = "未绑定 CC 对话";
     el.ccStatus.textContent = "点击绑定";
     el.ccStatus.className = "node-status unbound";
     el.ccCard.classList.add("unbound");
+    el.ccCard.classList.remove("busy");
   }
 
   // CC 下拉列表
@@ -135,14 +137,16 @@ function render(snap) {
   // ---- Codex 节点 ----
   if (v.codex.boundThreadId) {
     el.codexName.textContent = v.codex.boundTitle || v.codex.boundThreadShort;
-    el.codexStatus.textContent = "✓";
-    el.codexStatus.className = "node-status";
+    el.codexStatus.textContent = v.codex.statusLabel ?? "空闲";
+    el.codexStatus.className = `node-status${v.codex.busy ? " busy" : ""}`;
     el.codexCard.classList.remove("unbound");
+    el.codexCard.classList.toggle("busy", v.codex.busy === true);
   } else {
     el.codexName.textContent = "未绑定 Codex 对话";
     el.codexStatus.textContent = "点击绑定";
     el.codexStatus.className = "node-status unbound";
     el.codexCard.classList.add("unbound");
+    el.codexCard.classList.remove("busy");
   }
 
   // Codex 下拉列表
@@ -176,7 +180,7 @@ function renderSafety(snap) {
   el.safetyBanner.className = `safety ${risk.level}`;
   el.safetyText.textContent = risk.message;
   el.headerPill.className = `header-pill ${risk.level}`;
-  el.headerPill.textContent = risk.level === "ok" ? "Ready" : risk.level === "warning" ? "Check" : "Offline";
+  el.headerPill.textContent = risk.level === "ok" ? (isBusyMessage(risk.message) ? "Busy" : "Ready") : risk.level === "warning" ? "Check" : "Offline";
 }
 
 function renderTelemetry(v) {
@@ -240,24 +244,72 @@ function renderGroups(groups) {
     tab.addEventListener("click", async (e) => {
       e.stopPropagation();
       if (group.active) return;
-      await switchGroup(group.id);
       el.ccSection.classList.remove("open");
       el.codexSection.classList.remove("open");
       pulseArrow();
-      await refresh();
+      await switchGroup(group.id);
     });
     el.groupTabs.appendChild(tab);
   });
 }
 
 async function switchGroup(groupId) {
+  renderOptimisticGroupSwitch(groupId);
   const result = await postJson("/api/groups/switch", { groupId });
   if (result.antigravitySelection?.ok === false) {
     el.footerText.textContent = "CC 跳转失败";
     el.safetyBanner.className = "safety warning";
     el.safetyText.textContent = "分组已切换，Antigravity 没有跳过去";
   }
-  await openBoundCodex();
+  void openBoundCodex();
+  await refresh();
+}
+
+function renderOptimisticGroupSwitch(groupId) {
+  if (!lastSnapshot?.view?.groups) return;
+  const group = lastSnapshot.view.groups.find((item) => item.id === groupId);
+  if (!group) return;
+  const next = structuredClone(lastSnapshot);
+  const view = next.view;
+  view.groups = view.groups.map((item) => ({ ...item, active: item.id === groupId }));
+  view.activeGroupId = group.id;
+  view.activeGroupName = group.name ?? "";
+  view.cc.boundTitle = group.ccTitle ?? "";
+  view.cc.confidence = group.ccTitle ? 100 : 0;
+  view.cc.busy = null;
+  view.cc.busyKnown = false;
+  view.cc.statusLabel = "未知";
+  view.codex.boundThreadId = group.codexThreadId ?? "";
+  view.codex.boundThreadShort = shortenThreadId(group.codexThreadId);
+  view.codex.boundTitle = titleForThread(view, group.codexThreadId);
+  view.codex.busy = Boolean(group.codexBusy);
+  view.codex.statusLabel = view.codex.busy ? "执行中" : "空闲";
+  view.risk = optimisticRisk(view, group);
+  lastSnapshot = next;
+  render(next);
+}
+
+function titleForThread(view, threadId) {
+  if (!threadId) return "";
+  return view.codex.dbThreads?.find((thread) => thread.threadId === threadId)?.title ?? "";
+}
+
+function optimisticRisk(view, group) {
+  if (!view.bridge.cdpConnected || !view.codex.socketReady) return view.risk;
+  if (!group.ccTitle) return { level: "warning", message: "CC 对话未绑定，请选择" };
+  if (!group.codexThreadId) return { level: "warning", message: "Codex 对话未绑定，请选择" };
+  if (group.codexBusy) return { level: "ok", message: "Codex 执行中..." };
+  return { level: "ok", message: "双向通道就绪" };
+}
+
+function isBusyMessage(message) {
+  return String(message ?? "").includes("执行") || String(message ?? "").includes("思考");
+}
+
+function shortenThreadId(threadId) {
+  if (!threadId) return "";
+  if (threadId.length <= 18) return threadId;
+  return `${threadId.slice(0, 8)}...${threadId.slice(-5)}`;
 }
 
 async function openBoundCodex() {
