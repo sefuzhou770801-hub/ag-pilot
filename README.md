@@ -2,6 +2,8 @@
 
 > Let Antigravity and Codex talk to each other. No copy. No paste. Just supervised local routing.
 
+**English** | [中文](README-zh.md)
+
 [![Local first](https://img.shields.io/badge/local--first-100%25-22d3ee?style=for-the-badge)](#why-bridge)
 [![macOS](https://img.shields.io/badge/platform-macOS-a78bfa?style=for-the-badge)](#requirements)
 [![MIT](https://img.shields.io/badge/license-MIT-34d399?style=for-the-badge)](LICENSE)
@@ -11,6 +13,8 @@ AG Pilot is an **AI agent communication bridge** for people who run Antigravity 
 ## Demo
 
 ![Bridge status card](docs/images/card-screenshot.png)
+
+![Demo: switching groups](docs/images/demo.gif)
 
 Click a group tab in the local card and both sides follow the binding:
 
@@ -28,6 +32,7 @@ AG Pilot turns that loop into a small local control plane:
 - **Real Antigravity selection**: CDP sends actual mouse events, not brittle DOM clicks.
 - **Safe routing**: send and read from the bound target, not the currently focused window.
 - **Live status card**: see CDP, Codex IPC, bindings, and routing health at a glance.
+- **Status lock**: Codex is automatically marked busy when executing; released on completion or timeout.
 - **Local by design**: no hosted relay, no cloud database, no shared secret leaving the Mac.
 
 ## Quick Start
@@ -96,6 +101,7 @@ The bridge has one job: resolve the selected group, find the bound target, then 
 | CDP real click | Antigravity selection uses real mouse events so the app framework sees the interaction. |
 | Codex IPC open/send | Open and send to Codex threads through the local desktop IPC socket. |
 | Status card | A polished local dashboard for bindings, health, and quick group switching. |
+| Status lock | Codex is automatically marked busy on send, released on completion or timeout. The card shows execution state in real time. |
 | Safe failure mode | If a target is missing, the command fails instead of guessing where to send. |
 
 ## Configuration
