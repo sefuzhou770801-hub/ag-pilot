@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-LABEL="com.zhousefu.cc-codex-bridge.card"
-PORT="${CC_CODEX_BRIDGE_PORT:-4319}"
+LABEL="com.ag-pilot.card"
+PORT="${AG_PILOT_PORT:-4319}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 NODE_BIN="${NODE_BIN:-$(command -v node)}"
 PLIST_DIR="$HOME/Library/LaunchAgents"
@@ -30,7 +30,7 @@ cat > "$PLIST" <<PLIST
   <string>$ROOT</string>
   <key>EnvironmentVariables</key>
   <dict>
-    <key>CC_CODEX_BRIDGE_PORT</key>
+    <key>AG_PILOT_PORT</key>
     <string>$PORT</string>
   </dict>
   <key>RunAtLoad</key>

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PORT="${CC_CODEX_BRIDGE_PORT:-4319}"
+PORT="${AG_PILOT_PORT:-4319}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LABEL="com.zhousefu.cc-codex-bridge.card"
+LABEL="com.ag-pilot.card"
 UID_VALUE="$(id -u)"
 
 if ! launchctl print "gui/$UID_VALUE/$LABEL" >/dev/null 2>&1; then

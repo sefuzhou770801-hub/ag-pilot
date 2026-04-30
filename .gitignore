@@ -6,3 +6,5 @@ node_modules/
 .worktrees/
 worktrees/
 glow-overlay.swift
+symphony-codex-bridge*
+symphony-gemini-bridge*

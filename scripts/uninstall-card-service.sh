@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-LABEL="com.zhousefu.cc-codex-bridge.card"
+LABEL="com.ag-pilot.card"
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
 UID_VALUE="$(id -u)"
 
