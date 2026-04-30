@@ -53,7 +53,7 @@ test("readBridgeConfig keeps old Antigravity CDP setting as fallback", async () 
 
 test("statePathFor uses explicit paths before the project-local default", () => {
   assert.equal(statePathFor({ statePath: "/tmp/bridge-state.json" }), "/tmp/bridge-state.json");
-  assert.equal(statePathFor({ projectRoot: "/Users/example/ag-pilot" }), "/Users/example/ag-pilot/state.json");
+  assert.equal(statePathFor({ projectRoot: "/tmp/ag-pilot-root" }), "/tmp/ag-pilot-root/state.json");
   assert.match(statePathFor(), /ag-pilot\/state\.json$/);
 });
 
