@@ -1,0 +1,27 @@
+{
+  "name": "ag-pilot",
+  "version": "0.1.0",
+  "description": "Local AI agent communication bridge for Antigravity + Codex. No copy-paste, just supervised local routing.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "start": "node server.mjs"
+  },
+  "keywords": [
+    "ai-agents",
+    "antigravity",
+    "codex",
+    "local-first",
+    "macos",
+    "developer-tools"
+  ],
+  "author": "Sefu Zhou",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sefuzhou770801-hub/ag-pilot.git"
+  }
+}
