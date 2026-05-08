@@ -3,11 +3,27 @@
   "version": "0.1.0",
   "description": "Local AI agent communication bridge for Antigravity + Codex. No copy-paste, just supervised local routing.",
   "type": "module",
+  "main": "bridge.mjs",
+  "bin": {
+    "ag-pilot": "./bridge.mjs",
+    "ag-pilot-telegram": "./telegram-bot.mjs"
+  },
+  "files": [
+    "bridge.mjs",
+    "server.mjs",
+    "telegram-bot.mjs",
+    "lib/",
+    "public/",
+    "scripts/",
+    "state.example.json",
+    "LICENSE"
+  ],
   "engines": {
     "node": ">=22"
   },
   "scripts": {
     "test": "node --test test/*.test.mjs",
+    "lint": "eslint .",
     "start": "node server.mjs"
   },
   "keywords": [

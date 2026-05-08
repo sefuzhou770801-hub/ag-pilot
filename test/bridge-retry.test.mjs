@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { resolveCodexToCcAutoRoute, resolveRoutingGroup, sendTextToAntigravityWithRetry } from "../bridge.mjs";
+import { resolveCodexToAgAutoRoute, resolveRoutingGroup, sendTextToAntigravityWithRetry } from "../bridge.mjs";
 
 const groupedState = {
   data: {
@@ -12,13 +12,13 @@ const groupedState = {
       {
         id: "default",
         name: "默认分组",
-        ccTitle: "Synchronizing Codex App Messages",
+        agTitle: "Synchronizing Codex App Messages",
         codexThreadId: "019default",
       },
       {
         id: "open-source",
         name: "开源方案",
-        ccTitle: "Decoupling Antigravity-Codex Bridge",
+        agTitle: "Decoupling Antigravity-Codex Bridge",
         codexThreadId: "019opensource",
       },
     ],
@@ -31,7 +31,7 @@ test("routing defaults to the selected bridge group instead of the old active al
   const group = resolveRoutingGroup(groupedState, {});
 
   assert.equal(group.name, "开源方案");
-  assert.equal(group.ccTitle, "Decoupling Antigravity-Codex Bridge");
+  assert.equal(group.agTitle, "Decoupling Antigravity-Codex Bridge");
   assert.equal(group.codexThreadId, "019opensource");
 });
 
@@ -39,16 +39,16 @@ test("routing can target a fixed group by name", () => {
   const group = resolveRoutingGroup(groupedState, { group: "默认分组" });
 
   assert.equal(group.name, "默认分组");
-  assert.equal(group.ccTitle, "Synchronizing Codex App Messages");
+  assert.equal(group.agTitle, "Synchronizing Codex App Messages");
   assert.equal(group.codexThreadId, "019default");
 });
 
-test("codex-to-cc auto route uses the hook transcript thread instead of view group", async () => {
+test("codex-to-ag auto route uses the hook transcript thread instead of view group", async () => {
   const root = await makeTempDir();
   const rolloutPath = path.join(root, "rollout-2026-04-25T12-00-00-019default.jsonl");
   await writeFile(rolloutPath, "");
 
-  const route = await resolveCodexToCcAutoRoute(
+  const route = await resolveCodexToAgAutoRoute(
     { autoRoute: true },
     {
       state: groupedState,

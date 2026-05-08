@@ -12,7 +12,7 @@ test("buildCardViewModel keeps the bound CC even when another window is selected
     state: {
       data: {
         codexThreadId: "01900000-0000-7000-8000-000000000000",
-        ccTitle: "Bound CC",
+        agTitle: "Bound CC",
       },
     },
     status: {
@@ -26,8 +26,8 @@ test("buildCardViewModel keeps the bound CC even when another window is selected
   });
 
   assert.equal(model.codex.boundThreadShort, "01900000...00000");
-  assert.equal(model.cc.boundTitle, "Bound CC");
-  assert.equal(model.cc.matched, true);
+  assert.equal(model.ag.boundTitle, "Bound CC");
+  assert.equal(model.ag.matched, true);
   assert.equal(model.risk.level, "ok");
   assert.equal(model.risk.message, "双向通道就绪");
 });
@@ -40,19 +40,19 @@ test("buildCardViewModel keeps the viewed group title instead of active aliases"
           {
             id: "default",
             name: "默认分组",
-            ccTitle: "Synchronizing Codex App Messages",
+            agTitle: "Synchronizing Codex App Messages",
             codexThreadId: "019default",
           },
           {
             id: "open-source",
             name: "开源方案",
-            ccTitle: "Decoupling Antigravity-Codex Bridge",
+            agTitle: "Decoupling Antigravity-Codex Bridge",
             codexThreadId: "019opensource",
           },
         ],
         activeGroupId: "open-source",
         viewGroupId: "open-source",
-        ccTitle: "Synchronizing Codex App Messages",
+        agTitle: "Synchronizing Codex App Messages",
         codexThreadId: "019default",
       },
     },
@@ -65,8 +65,8 @@ test("buildCardViewModel keeps the viewed group title instead of active aliases"
     ],
   });
 
-  assert.equal(model.cc.boundTitle, "Decoupling Antigravity-Codex Bridge");
-  assert.equal(model.cc.matched, true);
+  assert.equal(model.ag.boundTitle, "Decoupling Antigravity-Codex Bridge");
+  assert.equal(model.ag.matched, true);
   assert.equal(model.codex.boundThreadId, "019opensource");
   assert.equal(model.codex.boundThreadShort, "019opensource");
   assert.equal(model.codex.latestThreadId, "");
@@ -80,19 +80,19 @@ test("buildCardViewModel does not show active group codex aliases for an unbound
           {
             id: "default",
             name: "默认分组",
-            ccTitle: "Default CC",
+            agTitle: "Default CC",
             codexThreadId: "019default",
           },
           {
             id: "open-source",
             name: "开源方案",
-            ccTitle: "Decoupling Antigravity-Codex Bridge",
+            agTitle: "Decoupling Antigravity-Codex Bridge",
             codexThreadId: "",
           },
         ],
         activeGroupId: "open-source",
         viewGroupId: "open-source",
-        ccTitle: "Default CC",
+        agTitle: "Default CC",
         codexThreadId: "019default",
       },
     },
@@ -125,7 +125,7 @@ test("buildCardViewModel reports both sides as busy", () => {
           {
             id: "open-source",
             name: "开源方案",
-            ccTitle: "Decoupling Antigravity-Codex Bridge",
+            agTitle: "Decoupling Antigravity-Codex Bridge",
             codexThreadId: "019opensource",
             codexBusy: true,
           },
@@ -144,8 +144,8 @@ test("buildCardViewModel reports both sides as busy", () => {
     antigravityBusy: { known: true, busy: true },
   });
 
-  assert.equal(model.cc.busy, true);
-  assert.equal(model.cc.statusLabel, "思考中");
+  assert.equal(model.ag.busy, true);
+  assert.equal(model.ag.statusLabel, "思考中");
   assert.equal(model.codex.busy, true);
   assert.equal(model.codex.statusLabel, "执行中");
   assert.equal(model.risk.message, "双向执行中");

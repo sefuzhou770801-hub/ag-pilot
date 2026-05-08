@@ -130,7 +130,7 @@ function makeState() {
         {
           id: "default",
           name: "Default",
-          ccTitle: "Bound CC",
+          agTitle: "Bound CC",
           codexThreadId: "019bound",
           codexBusy: false,
         },

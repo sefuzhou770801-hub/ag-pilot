@@ -8,3 +8,6 @@ worktrees/
 glow-overlay.swift
 symphony-codex-bridge*
 symphony-gemini-bridge*
+logs/
+.env
+.env.*

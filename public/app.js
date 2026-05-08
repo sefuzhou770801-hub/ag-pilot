@@ -9,12 +9,12 @@ const el = {
   groupTabs: $("groupTabs"),
   addGroupBtn: $("addGroupBtn"),
   headerPill: $("headerPill"),
-  ccCard: $("ccCard"),
-  ccName: $("ccName"),
-  ccStatus: $("ccStatus"),
-  ccSection: $("ccSection"),
-  ccDropdown: $("ccDropdown"),
-  ccList: $("ccList"),
+  agCard: $("agCard"),
+  agName: $("agName"),
+  agStatus: $("agStatus"),
+  agSection: $("agSection"),
+  agDropdown: $("agDropdown"),
+  agList: $("agList"),
   codexCard: $("codexCard"),
   codexName: $("codexName"),
   codexStatus: $("codexStatus"),
@@ -59,19 +59,19 @@ el.addGroupBtn.addEventListener("click", async (e) => {
 
 /* ---- 点击节点卡片展开/收起 ---- */
 
-el.ccCard.addEventListener("click", () => {
-  el.ccSection.classList.toggle("open");
+el.agCard.addEventListener("click", () => {
+  el.agSection.classList.toggle("open");
   el.codexSection.classList.remove("open");
 });
 
 el.codexCard.addEventListener("click", () => {
   el.codexSection.classList.toggle("open");
-  el.ccSection.classList.remove("open");
+  el.agSection.classList.remove("open");
 });
 
 // 点击外部收起
 document.addEventListener("click", (e) => {
-  if (!el.ccSection.contains(e.target)) el.ccSection.classList.remove("open");
+  if (!el.agSection.contains(e.target)) el.agSection.classList.remove("open");
   if (!el.codexSection.contains(e.target)) el.codexSection.classList.remove("open");
 });
 
@@ -112,25 +112,25 @@ function render(snap) {
 
   renderGroups(v.groups || []);
 
-  // ---- CC 节点 ----
-  if (v.cc.boundTitle) {
-    el.ccName.textContent = v.cc.boundTitle;
-    el.ccStatus.textContent = v.cc.statusLabel ?? "空闲";
-    el.ccStatus.className = `node-status${v.cc.busy ? " busy" : v.cc.busyKnown ? "" : " warning"}`;
-    el.ccCard.classList.remove("unbound");
-    el.ccCard.classList.toggle("busy", v.cc.busy === true);
+  // ---- Antigravity 节点 ----
+  if (v.ag.boundTitle) {
+    el.agName.textContent = v.ag.boundTitle;
+    el.agStatus.textContent = v.ag.statusLabel ?? "空闲";
+    el.agStatus.className = `node-status${v.ag.busy ? " busy" : v.ag.busyKnown ? "" : " warning"}`;
+    el.agCard.classList.remove("unbound");
+    el.agCard.classList.toggle("busy", v.ag.busy === true);
   } else {
-    el.ccName.textContent = "未绑定 CC 对话";
-    el.ccStatus.textContent = "点击绑定";
-    el.ccStatus.className = "node-status unbound";
-    el.ccCard.classList.add("unbound");
-    el.ccCard.classList.remove("busy");
+    el.agName.textContent = "未绑定 Antigravity 对话";
+    el.agStatus.textContent = "点击绑定";
+    el.agStatus.className = "node-status unbound";
+    el.agCard.classList.add("unbound");
+    el.agCard.classList.remove("busy");
   }
 
-  // CC 下拉列表
-  el.ccList.innerHTML = "";
+  // Antigravity 下拉列表
+  el.agList.innerHTML = "";
   convs.forEach((conv) => {
-    const isBound = conv.title === v.cc.boundTitle;
+    const isBound = conv.title === v.ag.boundTitle;
     const item = document.createElement("button");
     item.className = "dropdown-item" + (isBound ? " active" : "");
     const meta = isBound ? "已绑定" : "";
@@ -139,9 +139,9 @@ function render(snap) {
       <span class="dropdown-item-meta">${meta}</span>`;
     item.addEventListener("click", async (e) => {
       e.stopPropagation();
-      await bindCcConversation(conv.title);
+      await bindAgConversation(conv.title);
     });
-    el.ccList.appendChild(item);
+    el.agList.appendChild(item);
   });
 
   // ---- Codex 节点 ----
@@ -199,21 +199,21 @@ function renderTelemetry(v) {
   el.metricIpc.textContent = v.codex.socketReady ? "ready" : "off";
 }
 
-async function bindCcConversation(title) {
+async function bindAgConversation(title) {
   if (!title) return;
   uiBusy = true;
-  el.ccName.textContent = title;
-  el.ccStatus.textContent = "保存中";
-  el.ccStatus.className = "node-status unbound";
+  el.agName.textContent = title;
+  el.agStatus.textContent = "保存中";
+  el.agStatus.className = "node-status unbound";
   try {
-    await postJson("/api/bind/cc", { title });
-    el.ccSection.classList.remove("open");
+    await postJson("/api/bind/ag", { title });
+    el.agSection.classList.remove("open");
     pulseArrow();
     await refresh();
   } catch {
-    el.footerText.textContent = "CC 保存失败";
+    el.footerText.textContent = "Antigravity 保存失败";
     el.safetyBanner.className = "safety danger";
-    el.safetyText.textContent = "CC 对话没有保存，请再点一次";
+    el.safetyText.textContent = "Antigravity 对话没有保存，请再点一次";
   } finally {
     uiBusy = false;
   }
@@ -240,7 +240,7 @@ async function bindCodexThread(thread) {
 }
 
 function isMenuOpen() {
-  return el.ccSection.classList.contains("open") || el.codexSection.classList.contains("open");
+  return el.agSection.classList.contains("open") || el.codexSection.classList.contains("open");
 }
 
 function renderGroups(groups) {
@@ -254,7 +254,7 @@ function renderGroups(groups) {
     tab.addEventListener("click", async (e) => {
       e.stopPropagation();
       if (group.active) return;
-      el.ccSection.classList.remove("open");
+      el.agSection.classList.remove("open");
       el.codexSection.classList.remove("open");
       pulseArrow();
       await switchGroup(group.id);
@@ -281,7 +281,7 @@ async function switchGroup(groupId) {
   renderOptimisticGroupSwitch(groupId);
   const result = await postJson("/api/groups/switch", { groupId });
   if (result.antigravitySelection?.ok === false) {
-    el.footerText.textContent = "CC 跳转失败";
+    el.footerText.textContent = "Antigravity 跳转失败";
     el.safetyBanner.className = "safety warning";
     el.safetyText.textContent = "分组已切换，Antigravity 没有跳过去";
   }
@@ -298,11 +298,11 @@ function renderOptimisticGroupSwitch(groupId) {
   view.groups = view.groups.map((item) => ({ ...item, active: item.id === groupId }));
   view.activeGroupId = group.id;
   view.activeGroupName = group.name ?? "";
-  view.cc.boundTitle = group.ccTitle ?? "";
-  view.cc.confidence = group.ccTitle ? 100 : 0;
-  view.cc.busy = null;
-  view.cc.busyKnown = false;
-  view.cc.statusLabel = "未知";
+  view.ag.boundTitle = group.agTitle ?? "";
+  view.ag.confidence = group.agTitle ? 100 : 0;
+  view.ag.busy = null;
+  view.ag.busyKnown = false;
+  view.ag.statusLabel = "未知";
   view.codex.boundThreadId = group.codexThreadId ?? "";
   view.codex.boundThreadShort = shortenThreadId(group.codexThreadId);
   view.codex.boundTitle = titleForThread(view, group.codexThreadId);
@@ -320,7 +320,7 @@ function titleForThread(view, threadId) {
 
 function optimisticRisk(view, group) {
   if (!view.bridge.cdpConnected || !view.codex.socketReady) return view.risk;
-  if (!group.ccTitle) return { level: "warning", message: "CC 对话未绑定，请选择" };
+  if (!group.agTitle) return { level: "warning", message: "Antigravity 对话未绑定，请选择" };
   if (!group.codexThreadId) return { level: "warning", message: "Codex 对话未绑定，请选择" };
   if (group.codexBusy) return { level: "ok", message: "Codex 执行中..." };
   return { level: "ok", message: "双向通道就绪" };

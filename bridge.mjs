@@ -67,7 +67,7 @@ export async function run(cmd, flags) {
       routing: {
         defaultGroupId: defaultGroup?.id ?? "",
         defaultGroupName: defaultGroup?.name ?? "",
-        ccTitle: defaultGroup?.ccTitle ?? "",
+        agTitle: defaultGroup?.agTitle ?? "",
         codexThreadId: defaultGroup?.codexThreadId ?? "",
       },
       antigravity,
@@ -87,11 +87,11 @@ export async function run(cmd, flags) {
     return { ok: true, path, data };
   }
 
-  if (cmd === "bind-cc") {
+  if (cmd === "bind-ag") {
     const title = flags.title ?? flags._.join(" ").trim();
-    if (!title) throw new Error("Usage: bind-cc --title <Antigravity conversation title>");
+    if (!title) throw new Error("Usage: bind-ag --title <Antigravity conversation title>");
     const state = await loadState();
-    const data = updateViewGroup(state, { ccTitle: title });
+    const data = updateViewGroup(state, { agTitle: title });
     const path = await saveState(data);
     return { ok: true, path, data };
   }
@@ -131,39 +131,39 @@ export async function run(cmd, flags) {
   }
 
   if (cmd === "ag-latest") {
-    const title = await requireCcTitle(flags, false);
+    const title = await requireAgTitle(flags, false);
     return { ok: true, reply: await readLatestAntigravityReply({ title }) };
   }
 
   if (cmd === "ag-send") {
-    const route = await requireCcRoute(flags);
+    const route = await requireAgRoute(flags);
     const text = flags.text ?? flags._.join(" ").trim();
     const result = await sendTextToAntigravityWithRetry({ title: route.title, text });
     if (result.sent) await setCodexBusy(route.group?.id, false);
     return { ok: true, retried: result.retried, result };
   }
 
-  if (cmd === "cc-to-codex") {
+  if (cmd === "ag-to-codex") {
     const threadRoute = await requireThreadRoute(flags);
-    const title = await requireCcTitle(flags);
+    const title = await requireAgTitle(flags);
     const reply = await readLatestAntigravityReply({ title });
     if (flags.dryRun) {
-      return { ok: true, dryRun: true, direction: "cc-to-codex", source: reply, targetThreadId: threadRoute.threadId };
+      return { ok: true, dryRun: true, direction: "ag-to-codex", source: reply, targetThreadId: threadRoute.threadId };
     }
     const sent = await sendToCodexThread(threadRoute.threadId, reply.text, { waitMs: flags.waitMs });
     if (sent.ok) await setCodexBusy(threadRoute.group?.id, true);
-    return { ok: sent.ok, direction: "cc-to-codex", source: reply, codex: sent };
+    return { ok: sent.ok, direction: "ag-to-codex", source: reply, codex: sent };
   }
 
-  if (cmd === "codex-to-cc") {
+  if (cmd === "codex-to-ag") {
     const route = flags.autoRoute
-      ? await resolveCodexToCcAutoRoute(flags)
-      : await resolveCodexToCcManualRoute(flags);
+      ? await resolveCodexToAgAutoRoute(flags)
+      : await resolveCodexToAgManualRoute(flags);
     if (flags.dryRun) {
       return {
         ok: true,
         dryRun: true,
-        direction: "codex-to-cc",
+        direction: "codex-to-ag",
         source: route.reply,
         targetTitle: route.title,
         targetGroupId: route.group?.id ?? "",
@@ -173,7 +173,7 @@ export async function run(cmd, flags) {
     }
     const sent = await sendTextToAntigravity({ title: route.title, text: route.reply.text });
     await setCodexBusyForThread(route.threadId, false);
-    return { ok: true, direction: "codex-to-cc", source: route.reply, routeSource: route.routeSource, antigravity: sent };
+    return { ok: true, direction: "codex-to-ag", source: route.reply, routeSource: route.routeSource, antigravity: sent };
   }
 
   throw new Error(`Unknown command: ${cmd}`);
@@ -205,7 +205,7 @@ export function resolveRoutingGroup(state, flags = {}) {
   return getViewGroup(state);
 }
 
-export async function resolveCodexToCcAutoRoute(flags = {}, options = {}) {
+export async function resolveCodexToAgAutoRoute(flags = {}, options = {}) {
   const state = options.state ?? await loadState();
   const hookPayload = Object.hasOwn(options, "hookPayload")
     ? options.hookPayload
@@ -215,22 +215,22 @@ export async function resolveCodexToCcAutoRoute(flags = {}, options = {}) {
   if (threadId) {
     const group = findGroupByCodexThreadId(state, threadId);
     if (!group) throw new Error(`No group bound to Codex thread: ${threadId}`);
-    if (!group.ccTitle) throw new Error(`CC conversation is not bound for group: ${group.name}`);
+    if (!group.agTitle) throw new Error(`Antigravity conversation is not bound for group: ${group.name}`);
     return {
       threadId,
       group,
-      title: group.ccTitle,
+      title: group.agTitle,
       reply: await readAutoRouteReply(threadId, hookPayload, options.sessionsRoot),
       routeSource: hookPayload ? "hook" : "thread",
     };
   }
 
-  return await resolveLatestBoundCodexToCcRoute(state, options.sessionsRoot);
+  return await resolveLatestBoundCodexToAgRoute(state, options.sessionsRoot);
 }
 
-async function resolveCodexToCcManualRoute(flags) {
+async function resolveCodexToAgManualRoute(flags) {
   const threadRoute = await requireThreadRoute(flags);
-  const ccRoute = await requireCcRoute(flags);
+  const ccRoute = await requireAgRoute(flags);
   return {
     threadId: threadRoute.threadId,
     group: threadRoute.group ?? ccRoute.group,
@@ -240,12 +240,12 @@ async function resolveCodexToCcManualRoute(flags) {
   };
 }
 
-async function resolveLatestBoundCodexToCcRoute(state, sessionsRoot) {
+async function resolveLatestBoundCodexToAgRoute(state, sessionsRoot) {
   const groups = Array.isArray(state?.data?.groups) ? state.data.groups : Array.isArray(state?.groups) ? state.groups : [];
   const candidates = [];
 
   for (const group of groups) {
-    if (!group?.codexThreadId || !group?.ccTitle) continue;
+    if (!group?.codexThreadId || !group?.agTitle) continue;
     try {
       const rolloutPath = await findLatestCodexRollout(group.codexThreadId, sessionsRoot);
       const fileStat = await stat(rolloutPath);
@@ -262,7 +262,7 @@ async function resolveLatestBoundCodexToCcRoute(state, sessionsRoot) {
   return {
     threadId: latest.threadId,
     group: latest.group,
-    title: latest.group.ccTitle,
+    title: latest.group.agTitle,
     reply: await readLatestAssistantReply(latest.rolloutPath),
     routeSource: "latest-bound-thread",
   };
@@ -327,18 +327,18 @@ async function requireThreadRoute(flags) {
   throw new Error("Codex thread is not bound. Run bind-codex <threadId> first.");
 }
 
-async function requireCcTitle(flags, required = true) {
-  return (await requireCcRoute(flags, required)).title;
+async function requireAgTitle(flags, required = true) {
+  return (await requireAgRoute(flags, required)).title;
 }
 
-async function requireCcRoute(flags, required = true) {
+async function requireAgRoute(flags, required = true) {
   if (flags.title) return { title: flags.title, group: null };
   const state = await loadState();
   const group = resolveRoutingGroup(state, flags);
-  if (group?.ccTitle) return { title: group.ccTitle, group };
+  if (group?.agTitle) return { title: group.agTitle, group };
   if (!required) return { title: undefined, group };
-  if (group?.name) throw new Error(`CC conversation is not bound for group: ${group.name}`);
-  throw new Error("CC conversation is not bound. Run bind-cc --title <title> first.");
+  if (group?.name) throw new Error(`Antigravity conversation is not bound for group: ${group.name}`);
+  throw new Error("Antigravity conversation is not bound. Run bind-ag --title <title> first.");
 }
 
 async function setCodexBusy(groupId, codexBusy) {
@@ -422,12 +422,12 @@ function help() {
     usage: [
       "node ag-pilot/bridge.mjs status --json",
       "node ag-pilot/bridge.mjs bind-codex <threadId>",
-      "node ag-pilot/bridge.mjs bind-cc --title <title>",
+      "node ag-pilot/bridge.mjs bind-ag --title <title>",
       "node ag-pilot/bridge.mjs codex-send --group <name-or-id> --text <text>",
       "node ag-pilot/bridge.mjs codex-idle --thread <threadId>",
       "node ag-pilot/bridge.mjs ag-send --group <name-or-id> --text <text>",
-      "node ag-pilot/bridge.mjs cc-to-codex --dry-run",
-      "node ag-pilot/bridge.mjs codex-to-cc --auto-route --dry-run",
+      "node ag-pilot/bridge.mjs ag-to-codex --dry-run",
+      "node ag-pilot/bridge.mjs codex-to-ag --auto-route --dry-run",
     ].join("\n"),
   };
 }

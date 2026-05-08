@@ -63,7 +63,7 @@ test("normalizeStateData adds codex busy state to groups", () => {
       {
         id: "default",
         name: "默认分组",
-        ccTitle: "CC",
+        agTitle: "CC",
         codexThreadId: "019thread",
       },
     ],
