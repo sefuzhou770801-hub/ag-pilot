@@ -9,7 +9,9 @@
 [![macOS](https://img.shields.io/badge/平台-macOS-a78bfa?style=for-the-badge)](#环境要求)
 [![MIT](https://img.shields.io/badge/协议-MIT-34d399?style=for-the-badge)](LICENSE)
 
-![AG Pilot 控制面板](docs/images/card-screenshot.png)
+![AG Pilot](docs/images/banner.png)
+
+![演示](docs/images/demo.gif)
 
 AG Pilot 把一个 Antigravity 对话绑定到一个 Codex 线程，通过 CDP 和本地 IPC 路由消息。零依赖、零云端，一切留在你的 Mac 上。
 

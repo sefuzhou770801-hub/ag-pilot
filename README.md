@@ -9,7 +9,9 @@
 [![macOS](https://img.shields.io/badge/platform-macOS-a78bfa?style=for-the-badge)](#requirements)
 [![MIT](https://img.shields.io/badge/license-MIT-34d399?style=for-the-badge)](LICENSE)
 
-![AG Pilot control card](docs/images/card-screenshot.png)
+![AG Pilot](docs/images/banner.png)
+
+![Demo](docs/images/demo.gif)
 
 AG Pilot binds one Antigravity conversation to one Codex thread, then routes messages through CDP and local IPC. Zero dependencies. Zero cloud. Everything stays on your Mac.
 
