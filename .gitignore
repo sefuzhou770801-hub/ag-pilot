@@ -11,3 +11,5 @@ symphony-gemini-bridge*
 logs/
 .env
 .env.*
+.omc/
+.playwright-mcp/
