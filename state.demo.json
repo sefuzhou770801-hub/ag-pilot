@@ -1,0 +1,39 @@
+{
+  "groups": [
+    {
+      "id": "demo-ag-pilot",
+      "name": "AG Pilot",
+      "agTitle": "Designing the Message Router",
+      "codexThreadId": "019e0637-ce6e-73e2-82c2-16c68c2ff67a",
+      "codexBusy": false,
+      "createdAt": "2026-05-08T00:00:00.000Z"
+    },
+    {
+      "id": "demo-ios-app",
+      "name": "iOS App",
+      "agTitle": "Building SwiftUI Components",
+      "codexThreadId": "019e0844-aa22-7b01-9c3f-demo00000002",
+      "codexBusy": false,
+      "createdAt": "2026-05-07T00:00:00.000Z"
+    },
+    {
+      "id": "demo-open-source",
+      "name": "Open Source",
+      "agTitle": "Writing the Plugin System",
+      "codexThreadId": "019e0955-bb33-8c12-ad40-demo00000003",
+      "codexBusy": true,
+      "createdAt": "2026-05-06T00:00:00.000Z"
+    },
+    {
+      "id": "demo-blog",
+      "name": "Blog",
+      "agTitle": "Drafting the Launch Post",
+      "codexThreadId": "",
+      "codexBusy": false,
+      "createdAt": "2026-05-05T00:00:00.000Z"
+    }
+  ],
+  "activeGroupId": "demo-ag-pilot",
+  "viewGroupId": "demo-ag-pilot",
+  "updatedAt": "2026-05-08T09:30:00.000Z"
+}
